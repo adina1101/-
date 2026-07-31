@@ -1,0 +1,51 @@
+:root {
+  --bg: #030511;
+  --surface: #0b0e1d;
+  --surface-2: #141829;
+  --line: rgba(255,255,255,.1);
+  --text: #f7f7fa;
+  --muted: #9297aa;
+  --green: #f21f2d;
+  --green-dark: #321019;
+  --orange: #f21f2d;
+  --red: #f21f2d;
+  --shadow: 0 18px 45px rgba(0,0,0,.42);
+}
+:root[data-theme='light'] { --bg:#f2f3f7; --surface:#fff; --surface-2:#e8e9ef; --line:rgba(8,10,27,.11); --text:#090b18; --muted:#696d7c; --green-dark:#ffe3e5; }
+body { background: radial-gradient(circle at 50% 0,#11152a,var(--bg) 48%); }
+.app-frame { background: linear-gradient(180deg,#070a18,var(--bg) 45%); }
+.brand-lockup { display:flex; align-items:center; gap:9px; }
+.brand-lockup > strong { font-size:13px; letter-spacing:2px; font-style:italic; }
+.brand-lockup > strong span { color:var(--red); }
+.brand-mark { position:relative; overflow:hidden; color:var(--red); border:1px solid #30354b; background:linear-gradient(145deg,#161a2d,#070914); box-shadow:inset 0 0 0 2px #060812,0 6px 18px #0008; }
+.brand-mark::before { content:'C'; position:absolute; color:#fff; font-size:31px; font-weight:900; font-style:italic; }
+.brand-mark span { position:relative; z-index:2; font-size:13px; }
+.hero-card { background:radial-gradient(circle at 90% 50%,#25101b,transparent 42%),linear-gradient(145deg,#111527,#070913); border:1px solid #292e43; }
+.hero-card::after { opacity:.09; background-image:linear-gradient(135deg,transparent 48%,#fff 49%,transparent 51%); background-size:22px 22px; }
+.hero-brand-art { position:absolute; z-index:1; width:235px; height:235px; right:-42px; top:16px; object-fit:contain; mix-blend-mode:screen; filter:contrast(1.08) drop-shadow(0 12px 22px #000); opacity:.86; }
+.hero-copy { max-width:62%; }.online-pill { color:#ffb4ba; border:1px solid #5c2028; background:#18080da8; }.online-pill i { box-shadow:0 0 9px var(--red); }
+.primary-button,.category-tabs button.active,.friend-tabs button.active,.segmented button.active { color:#fff; background:linear-gradient(135deg,#ff2937,#c90d1a); box-shadow:0 9px 25px #f21f2d33; }
+.bottom-nav { background:rgba(5,7,18,.95); border-color:#22263a; }.nav-item.active .icon { filter:drop-shadow(0 0 8px #f21f2d88); }
+.bottom-nav .nav-item { min-width:44px; font-size:8px; }.bottom-nav .nav-item .icon { height:25px; font-size:20px; }
+.mode-card,.game-card,.mission-card,.settings-group,.stat-grid article,.achievement-row div,.match-list article { border-color:#24283a; background:linear-gradient(145deg,#101425,#090c18); }
+.mode-card:hover,.game-card:hover { border-color:#f21f2d88; background:#15182a; }
+.purple,.blue,.green,.orange { color:#fff; background:linear-gradient(145deg,#38121b,#190b13); border:1px solid #72202b; }
+.practice-banner { color:#fff; background:linear-gradient(135deg,#24101a,#090b18); border:1px solid #551923; }.practice-banner p { color:#a99099; }
+.difficulty,.friend-row button { color:#ff6872; background:#321019; }
+.detail-hero,.table-preview { background:radial-gradient(circle,#33101b,#080a16 70%); border:1px solid #3c1720; }
+.progress i { background:linear-gradient(90deg,#bd0c18,#ff3340); box-shadow:0 0 9px #f21f2d88; }
+.token-balance .icon,.balance .icon { color:#f4f4f7; }
+.avatar,.profile-avatar { border-color:var(--red); background:linear-gradient(145deg,#3b4157,#101321); }
+.profile-avatar span { color:#fff; background:var(--red); }
+.durak-room { background:radial-gradient(ellipse at 50% 43%,#151a31,#070916 65%,#02030a); }
+.durak-table { border-color:#5d203055; box-shadow:inset 0 0 75px #000b,0 0 40px #f21f2d0a; }
+.deck-cover,.opponent-hand i { color:#ff424e; border-color:#eee; background:repeating-linear-gradient(45deg,#161a2d 0 6px,#080a14 6px 12px); }
+.action-primary,.move-button { color:#fff; background:linear-gradient(135deg,#ff2937,#bf0916); }
+.action-secondary { color:#fff; border-color:#792430; background:#210c14; }
+.game-message { color:#fff; text-shadow:0 0 12px #f21f2d; }
+.player-badge { border-color:var(--red); background:linear-gradient(145deg,#ed2633,#7e111a); }
+.player-badge.rival { border-color:#dadce6; background:#171a2c; color:#fff; }
+.pause-card { border-color:#3b4057; background:linear-gradient(160deg,#15192b,#090b16); }
+:root[data-theme='light'] .app-frame { background:linear-gradient(180deg,#fff,var(--bg)); }
+:root[data-theme='light'] .bottom-nav { background:rgba(255,255,255,.96); }
+:root[data-theme='light'] .mode-card,:root[data-theme='light'] .game-card,:root[data-theme='light'] .mission-card,:root[data-theme='light'] .settings-group,:root[data-theme='light'] .stat-grid article,:root[data-theme='light'] .achievement-row div,:root[data-theme='light'] .match-list article { background:#fff; border-color:#dfe1e9; }

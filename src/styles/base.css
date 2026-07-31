@@ -1,0 +1,57 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
+
+:root {
+  font-family: 'Manrope', system-ui, sans-serif;
+  color: #f4f7f5;
+  background: #081411;
+  font-synthesis: none;
+  --bg: #081411;
+  --surface: #101f1b;
+  --surface-2: #152824;
+  --line: rgba(255, 255, 255, .08);
+  --text: #f4f7f5;
+  --muted: #90a39d;
+  --green: #41dc8e;
+  --green-dark: #153d2d;
+  --orange: #ff9f43;
+  --red: #ff666f;
+  --shadow: 0 16px 40px rgba(0, 0, 0, .24);
+}
+
+:root[data-theme='light'] {
+  --bg: #f3f6f4;
+  --surface: #fff;
+  --surface-2: #e9efec;
+  --line: rgba(15, 47, 37, .1);
+  --text: #10231d;
+  --muted: #697b75;
+  --green-dark: #d9f5e6;
+  --shadow: 0 12px 32px rgba(22, 54, 44, .1);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { background: var(--bg); }
+body { min-width: 320px; min-height: 100vh; background: var(--bg); color: var(--text); }
+button, input { font: inherit; }
+button, a { -webkit-tap-highlight-color: transparent; }
+button { border: 0; cursor: pointer; color: inherit; }
+a { color: inherit; text-decoration: none; }
+
+.app-frame {
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+  min-height: 100vh;
+  margin: auto;
+  background: var(--bg);
+  box-shadow: 0 0 80px rgba(0, 0, 0, .2);
+}
+.app-content { min-height: 100vh; }
+.screen { padding: 28px 20px 112px; animation: enter .35s ease; }
+@keyframes enter { from { opacity: 0; transform: translateY(8px); } }
+
+@media (min-width: 760px) {
+  body { padding: 20px 0; }
+  .app-frame { min-height: calc(100vh - 40px); border-radius: 28px; overflow: hidden; }
+  .app-content { min-height: calc(100vh - 40px); }
+}

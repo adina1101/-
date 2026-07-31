@@ -28,6 +28,9 @@ try {
 
 const apiKey = readValue(source, 'GEMINI_API_KEY');
 if (!apiKey) fail('GEMINI_API_KEY is missing in .env');
+const supabaseUrl = readValue(source, 'VITE_SUPABASE_URL');
+const projectRef = /^https:\/\/([a-z0-9]+)\.supabase\.co\/?$/i.exec(supabaseUrl)?.[1];
+if (!projectRef) fail('VITE_SUPABASE_URL is missing or invalid in .env');
 
 const tempDirectory = await mkdtemp(join(tmpdir(), 'nfact-ai-secret-'));
 const secretFile = join(tempDirectory, 'gemini.env');
@@ -38,7 +41,9 @@ const supabaseCli = fileURLToPath(
 let uploadError = '';
 try {
   await writeFile(secretFile, `GEMINI_API_KEY=${apiKey}\n`, { mode: 0o600 });
-  const result = spawnSync(process.execPath, [supabaseCli, 'secrets', 'set', '--env-file', secretFile], {
+  const result = spawnSync(process.execPath, [
+    supabaseCli, 'secrets', 'set', '--env-file', secretFile, '--project-ref', projectRef,
+  ], {
     stdio: 'inherit',
   });
   if (result.error) uploadError = result.error.message;
