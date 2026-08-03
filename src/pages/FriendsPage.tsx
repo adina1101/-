@@ -1,86 +1,119 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
 import { Icon } from '../components/Icon';
 import { PageHeader } from '../components/PageHeader';
 import { useApp } from '../lib/app-context';
-
-interface Person {
-  id: string;
-  name: string;
-  level: number;
-  status: string;
-  initial: string;
-  color: string;
-}
-
-const initialFriends: Person[] = [
-  { id: 'miras', name: 'Miras', level: 18, status: 'В игре', initial: 'М', color: 'orange' },
-  { id: 'sofia', name: 'Sofia', level: 14, status: 'Онлайн', initial: 'С', color: 'purple' },
-  { id: 'timur', name: 'Timur', level: 11, status: 'Онлайн', initial: 'Т', color: 'blue' },
-  { id: 'alex', name: 'Alex', level: 20, status: '2 ч. назад', initial: 'A', color: 'green' },
-];
-
-const initialRequests: Person[] = [
-  { id: 'dana', name: 'Dana', level: 9, status: 'Хочет дружить', initial: 'Д', color: 'purple' },
-  { id: 'arsen', name: 'Arsen', level: 16, status: 'Хочет дружить', initial: 'А', color: 'blue' },
-];
+import { useAuth } from '../lib/auth-context';
+import {
+  acceptFriendRequest, loadFriends, removeFriendConnection, sendFriendRequest,
+  type FriendConnection,
+} from '../lib/friends';
+import { useOnlineStatus } from '../lib/online-status';
 
 export function FriendsPage() {
-  const { t, language } = useApp();
+  const { t, language, profile } = useApp();
+  const { user } = useAuth();
+  const online = useOnlineStatus();
   const [, navigate] = useLocation();
   const [tab, setTab] = useState<'friends' | 'requests'>('friends');
-  const [query, setQuery] = useState('');
-  const [friends, setFriends] = useState(initialFriends);
-  const [requests, setRequests] = useState(initialRequests);
-  const source = tab === 'friends' ? friends : requests;
-  const visible = useMemo(() => source.filter((person) =>
-    person.name.toLowerCase().includes(query.trim().toLowerCase())), [query, source]);
-  const copy = language === 'ru'
-    ? { accept: 'Принять', decline: 'Отклонить', empty: 'Ничего не найдено' }
-    : { accept: 'Accept', decline: 'Decline', empty: 'Nothing found' };
+  const [friends, setFriends] = useState<FriendConnection[]>([]);
+  const [requests, setRequests] = useState<FriendConnection[]>([]);
+  const [ownCode, setOwnCode] = useState('');
+  const [targetCode, setTargetCode] = useState('');
+  const [message, setMessage] = useState('');
+  const [busy, setBusy] = useState('loading');
+  const ru = language === 'ru';
 
-  const invite = (person: Person) => {
-    sessionStorage.setItem('cardix-invited-friend', person.name);
+  const refresh = useCallback(async () => {
+    if (!user || !online) { setBusy(''); return; }
+    setBusy('loading');
+    try {
+      const snapshot = await loadFriends(user.id, profile.nickname);
+      setFriends(snapshot.friends); setRequests(snapshot.requests); setOwnCode(snapshot.ownCode);
+    } catch { setMessage(ru ? 'Не удалось загрузить друзей' : 'Could not load friends'); }
+    finally { setBusy(''); }
+  }, [online, profile.nickname, ru, user]);
+
+  useEffect(() => { void refresh(); }, [refresh]);
+
+  const run = async (id: string, action: () => Promise<void>) => {
+    setBusy(id); setMessage('');
+    try { await action(); await refresh(); }
+    catch { setMessage(ru ? 'Не удалось выполнить действие' : 'Action failed'); setBusy(''); }
+  };
+
+  const send = async () => {
+    if (targetCode.trim().length < 6) return;
+    setBusy('send'); setMessage('');
+    try {
+      const result = await sendFriendRequest(targetCode);
+      const resultCopy = ru ? {
+        sent: 'Заявка отправлена', not_found: 'Пользователь с таким кодом не найден',
+        self: 'Нельзя добавить самого себя', pending: 'Заявка уже существует',
+        already_friends: 'Вы уже друзья',
+      } : {
+        sent: 'Request sent', not_found: 'No user found with this code', self: 'You cannot add yourself',
+        pending: 'Request already exists', already_friends: 'You are already friends',
+      };
+      setMessage(resultCopy[result]);
+      if (result === 'sent') { setTargetCode(''); await refresh(); }
+    } catch { setMessage(ru ? 'Не удалось отправить заявку' : 'Could not send request'); }
+    finally { setBusy(''); }
+  };
+
+  const invite = (friend: FriendConnection) => {
+    sessionStorage.setItem('cardix-invited-friend', friend.nickname);
     navigate('/play/online');
   };
+  const visible = tab === 'friends' ? friends : requests;
 
-  const accept = (person: Person) => {
-    setRequests((current) => current.filter((item) => item.id !== person.id));
-    setFriends((current) => current.some((item) => item.id === person.id)
-      ? current : [...current, { ...person, status: language === 'ru' ? 'Онлайн' : 'Online' }]);
-  };
-
-  const decline = (id: string) => {
-    setRequests((current) => current.filter((person) => person.id !== id));
-  };
-
-  return (
-    <div className="screen">
-      <PageHeader title={t('friends')} subtitle={`${friends.length} ${t('friends').toLowerCase()}`} />
-      <label className="search-box"><Icon name="search" /><input value={query}
-        onChange={(event) => setQuery(event.target.value)} placeholder={t('searchFriend')} /></label>
-      <div className="friend-tabs">
-        <button type="button" className={tab === 'friends' ? 'active' : ''} onClick={() => setTab('friends')}>{t('friends')}</button>
-        <button type="button" className={tab === 'requests' ? 'active' : ''} onClick={() => setTab('requests')}>
-          {t('requests')} {requests.length > 0 && <b>{requests.length}</b>}
-        </button>
-      </div>
-      <div className="section-heading"><h2>{tab === 'friends' ? t('onlineNow') : t('requests')}</h2><span>{visible.length}</span></div>
-      <section className="friend-list">
-        {visible.map((person) => (
-          <article className="friend-row" key={person.id}>
-            <div className={`friend-initial ${person.color}`}>{person.initial}<i /></div>
-            <div><h3>{person.name}</h3><p>{t('level')} {person.level} · {person.status}</p></div>
-            {tab === 'friends'
-              ? <button type="button" onClick={() => invite(person)}>{t('invite')}</button>
-              : <div className="request-actions">
-                <button type="button" onClick={() => accept(person)}>{copy.accept}</button>
-                <button type="button" className="decline" onClick={() => decline(person.id)} aria-label={`${copy.decline}: ${person.name}`}>×</button>
-              </div>}
-          </article>
-        ))}
-        {visible.length === 0 && <p className="friends-empty">{copy.empty}</p>}
-      </section>
+  return <div className="screen friends-screen">
+    <PageHeader title={t('friends')} subtitle={`${friends.length} ${t('friends').toLowerCase()}`} />
+    <section className="friend-code-card">
+      <div><small>{ru ? 'Ваш код друга' : 'Your friend code'}</small><strong>{ownCode || '••••••••'}</strong></div>
+      <button type="button" disabled={!ownCode} onClick={() => {
+        void navigator.clipboard.writeText(ownCode)
+          .then(() => setMessage(ru ? 'Код скопирован' : 'Code copied'))
+          .catch(() => setMessage(ru ? 'Выделите и скопируйте код вручную' : 'Select and copy the code manually'));
+      }}>{ru ? 'Копировать' : 'Copy'}</button>
+    </section>
+    <section className="friend-add-form">
+      <label className="search-box"><Icon name="search" /><input maxLength={8} value={targetCode}
+        onChange={(event) => setTargetCode(event.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))}
+        placeholder={ru ? 'Введите код друга' : 'Enter friend code'} /></label>
+      <button type="button" disabled={!online || busy === 'send' || targetCode.length < 6} onClick={() => void send()}>{t('addFriend')}</button>
+    </section>
+    {message && <p className="friends-message" role="status">{message}</p>}
+    <div className="friend-tabs">
+      <button type="button" className={tab === 'friends' ? 'active' : ''} onClick={() => { setTab('friends'); void refresh(); }}>{t('friends')}</button>
+      <button type="button" className={tab === 'requests' ? 'active' : ''} onClick={() => { setTab('requests'); void refresh(); }}>
+        {t('requests')} {requests.length > 0 && <b>{requests.length}</b>}
+      </button>
     </div>
-  );
+    <section className="friend-list">
+      {visible.map((person) => <article className="friend-row" key={person.requestId}>
+        <div className="friend-initial purple">{person.nickname.slice(0, 1).toUpperCase()}<i /></div>
+        <div><h3>{person.nickname}</h3><p>{person.direction === 'outgoing'
+          ? (ru ? 'Заявка отправлена' : 'Request sent') : `CARDIX · ${person.code}`}</p></div>
+        {person.direction === 'friend' ? <div className="request-actions">
+          <button type="button" onClick={() => invite(person)}>{t('invite')}</button>
+          <button type="button" className="decline" disabled={busy === person.requestId}
+            aria-label={ru ? `Удалить ${person.nickname} из друзей` : `Remove ${person.nickname}`}
+            onClick={() => void run(person.requestId, () => removeFriendConnection(person.requestId))}>×</button>
+        </div> : person.direction === 'incoming' ? <div className="request-actions">
+          <button type="button" disabled={busy === person.requestId}
+            onClick={() => void run(person.requestId, () => acceptFriendRequest(person.requestId))}>{ru ? 'Принять' : 'Accept'}</button>
+          <button type="button" className="decline" disabled={busy === person.requestId}
+            aria-label={ru ? `Отклонить заявку ${person.nickname}` : `Decline ${person.nickname}`}
+            onClick={() => void run(person.requestId, () => removeFriendConnection(person.requestId))}>×</button>
+        </div> : <button type="button" disabled={busy === person.requestId}
+          onClick={() => void run(person.requestId, () => removeFriendConnection(person.requestId))}>{ru ? 'Отменить' : 'Cancel'}</button>}
+      </article>)}
+      {busy === 'loading' && <p className="friends-empty">{ru ? 'Загрузка…' : 'Loading…'}</p>}
+      {!online && <p className="friends-empty">{ru ? 'Для друзей нужен интернет' : 'Friends require an internet connection'}</p>}
+      {!busy && online && visible.length === 0 && <p className="friends-empty">{tab === 'friends'
+        ? (ru ? 'Здесь появятся настоящие друзья' : 'Your real friends will appear here')
+        : (ru ? 'Новых заявок нет' : 'No new requests')}</p>}
+    </section>
+  </div>;
 }
