@@ -1,15 +1,17 @@
 import assert from 'node:assert/strict';
 import {
-  applyDurakAction, chooseDurakAction, createMultiplayerDurak, getDurakCardError,
+  applyDurakAction, chooseDurakAction, createMultiplayerDurak, getDefenderCardOptions, getDurakCardError,
 } from '../src/lib/multiplayer-durak-engine.ts';
 
-interface Scenario { label: string; count: number; humanIds: number[]; seed: number }
+interface Scenario { label: string; count: number; humanIds: number[]; seed: number; rules?: 'throw-in' | 'transfer' }
 
 const scenarios: Scenario[] = [
   { label: '2 players: human + AI', count: 2, humanIds: [0], seed: 21 },
   { label: '3 players: human + 2 AI', count: 3, humanIds: [0], seed: 32 },
   { label: '4 players: 4 AI', count: 4, humanIds: [], seed: 43 },
   { label: '6 players: human + 5 AI', count: 6, humanIds: [0], seed: 65 },
+  { label: 'Transfer Durak: 3 players', count: 3, humanIds: [0], seed: 76, rules: 'transfer' },
+  { label: 'Transfer Durak: 6 players', count: 6, humanIds: [0], seed: 87, rules: 'transfer' },
 ];
 
 function seededRandom(seed: number) {
@@ -19,6 +21,32 @@ function seededRandom(seed: number) {
     return value / 4294967296;
   };
 }
+
+const baseTransfer = createMultiplayerDurak(['Attacker', 'Defender', 'Next'], () => 0.42, 'transfer');
+const allCards = [...baseTransfer.deck, ...baseTransfer.players.flatMap((player) => player.hand)];
+const attackCard = allCards.find((card) => card.suit !== baseTransfer.trump)!;
+const choiceCard = allCards.find((card) => card.suit === baseTransfer.trump && card.rank === attackCard.rank)!;
+const receiverCards = allCards.filter((card) => card.id !== attackCard.id && card.id !== choiceCard.id).slice(0, 6);
+const choiceGame = {
+  ...baseTransfer,
+  players: [
+    { ...baseTransfer.players[0], hand: [receiverCards[0]] },
+    { ...baseTransfer.players[1], hand: [choiceCard] },
+    { ...baseTransfer.players[2], hand: receiverCards.slice(1) },
+  ],
+  table: [{ attack: attackCard }], attacker: 0, defender: 1, actor: 1,
+  phase: 'defend' as const, defenderStartCards: 1,
+};
+assert.deepEqual(getDefenderCardOptions(choiceGame, choiceCard), { canDefend: true, canTransfer: true });
+const defended = applyDurakAction(choiceGame, { type: 'defend', cardId: choiceCard.id });
+assert.equal(defended.table[0].defense?.id, choiceCard.id, 'Beat must cover the attacking card');
+assert.equal(defended.defender, 1, 'Beat must keep the current defender');
+const transferred = applyDurakAction(choiceGame, { type: 'transfer', cardId: choiceCard.id });
+assert.equal(transferred.table.length, 2, 'Transfer must add the selected card to the attack');
+assert.equal(transferred.attacker, 1, 'The previous defender becomes the attacker');
+assert.equal(transferred.defender, 2, 'Transfer must target the next active player');
+assert.equal(transferred.actor, 2, 'The new defender must act immediately');
+console.log('✓ transfer choice: both Beat and Transfer actions work');
 
 function cardIds(game: ReturnType<typeof createMultiplayerDurak>) {
   return [
@@ -32,7 +60,7 @@ function cardIds(game: ReturnType<typeof createMultiplayerDurak>) {
 for (const scenario of scenarios) {
   const names = Array.from({ length: scenario.count }, (_, id) =>
     scenario.humanIds.includes(id) ? `Human ${id}` : `AI ${id}`);
-  let game = createMultiplayerDurak(names, seededRandom(scenario.seed));
+  let game = createMultiplayerDurak(names, seededRandom(scenario.seed), scenario.rules);
   const actors = new Set<number>();
   const aiVsAi = new Set<string>();
   let turns = 0;

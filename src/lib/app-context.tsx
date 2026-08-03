@@ -1,36 +1,22 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { translate, type TranslationKey } from './i18n';
-import type { AvatarAppearance, AvatarGender, AvatarProfile, Language, Theme } from './types';
+import type { Language, Theme, UserProfile } from './types';
 
 interface AppContextValue {
   language: Language;
   theme: Theme;
   favorites: string[];
   settings: Record<'sound' | 'music' | 'animations' | 'notifications', boolean>;
-  profile: AvatarProfile;
+  profile: UserProfile;
   setLanguage: (value: Language) => void;
   setTheme: (value: Theme) => void;
   toggleFavorite: (id: string) => void;
   toggleSetting: (key: keyof AppContextValue['settings']) => void;
-  updateProfile: (nickname: string, avatar: string | null) => void;
-  setAvatarGender: (gender: AvatarGender) => void;
-  updateAvatarAppearance: (appearance: Partial<AvatarAppearance>) => void;
+  updateProfile: (nickname: string, photo: string | null) => void;
   t: (key: TranslationKey) => string;
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
-const defaultAppearance: AvatarAppearance = {
-  boyHairStyle: 'mullet', girlHairStyle: 'layers',
-  hairColor: '#3b241d', skinTone: '#e9a06f', eyeColor: '#63391f',
-};
-const boyHairStyles = new Set<AvatarAppearance['boyHairStyle']>(['mullet', 'french-fade', 'buzz', 'bowl']);
-
-function restoreAppearance(saved?: Partial<AvatarAppearance>): AvatarAppearance {
-  const candidate = saved?.boyHairStyle as AvatarAppearance['boyHairStyle'] | undefined;
-  const boyHairStyle = candidate && boyHairStyles.has(candidate) ? candidate : defaultAppearance.boyHairStyle;
-  return { ...defaultAppearance, ...saved, boyHairStyle };
-}
-
 export function AppProvider({ children }: { children: ReactNode }) {
   const [language, setLanguage] = useState<Language>(() => localStorage.getItem('language') === 'en' ? 'en' : 'ru');
   const [theme, setTheme] = useState<Theme>(() => localStorage.getItem('theme') === 'light' ? 'light' : 'dark');
@@ -39,13 +25,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState(() => {
     try {
       const stored = localStorage.getItem('cardix-profile');
-      const saved = stored ? JSON.parse(stored) as Partial<AvatarProfile> : null;
+      const saved = stored ? JSON.parse(stored) as Partial<UserProfile> : null;
       return {
-        nickname: saved?.nickname ?? 'Adina', avatar: saved?.avatar ?? null,
-        gender: saved?.gender ?? 'girl', appearance: restoreAppearance(saved?.appearance),
-      } satisfies AvatarProfile;
+        nickname: saved?.nickname ?? 'Adina', photo: saved?.photo ?? null,
+      } satisfies UserProfile;
     } catch {
-      return { nickname: 'Adina', avatar: null, gender: 'girl', appearance: defaultAppearance } satisfies AvatarProfile;
+      return { nickname: 'Adina', photo: null } satisfies UserProfile;
     }
   });
 
@@ -62,11 +47,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     toggleFavorite: (id) => setFavorites((current) =>
       current.includes(id) ? current.filter((item) => item !== id) : [...current, id]),
     toggleSetting: (key) => setSettings((current) => ({ ...current, [key]: !current[key] })),
-    updateProfile: (nickname, avatar) => setProfile((current) => ({ ...current, nickname: nickname.trim() || 'Player', avatar })),
-    setAvatarGender: (gender) => setProfile((current) => ({ ...current, gender })),
-    updateAvatarAppearance: (appearance) => setProfile((current) => ({
-      ...current, appearance: { ...current.appearance, ...appearance },
-    })),
+    updateProfile: (nickname, photo) => setProfile((current) => ({ ...current, nickname: nickname.trim() || 'Player', photo })),
     t: (key) => translate(language, key),
   }), [favorites, language, profile, settings, theme]);
 

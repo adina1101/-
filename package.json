@@ -11,6 +11,7 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "test:multiplayer": "node --experimental-strip-types scripts/test-multiplayer-durak.mts",
+    "test:streak": "node --experimental-strip-types scripts/test-streak.mts",
     "db:login": "supabase login",
     "db:link": "supabase link",
     "db:new": "supabase migration new",

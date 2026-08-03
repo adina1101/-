@@ -2,13 +2,14 @@ import { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'wouter';
 import { DeckCover } from '../components/DeckCover';
 import { PlayingCardView as Card } from '../components/PlayingCardView';
-import { UserAvatar } from '../components/UserAvatar';
 import { InvalidMoveDialog } from '../components/InvalidMoveDialog';
+import { MatchStreakStatus } from '../components/MatchStreakStatus';
+import { TransferChoiceDialog } from '../components/TransferChoiceDialog';
 import { useApp } from '../lib/app-context';
 import { useEconomy } from '../lib/economy-context';
-import type { TablePair } from '../lib/card-engine';
+import type { PlayingCard, TablePair } from '../lib/card-engine';
 import {
-  applyDurakAction, chooseDurakAction, createMultiplayerDurak, getDurakCardError,
+  applyDurakAction, chooseDurakAction, createMultiplayerDurak, getDefenderCardOptions, getDurakCardError,
   type DurakCardError,
 } from '../lib/multiplayer-durak-engine';
 import { games } from '../lib/games';
@@ -16,7 +17,7 @@ import { games } from '../lib/games';
 const botNames = ['CardBot', 'Nova', 'Rex', 'Luna', 'Max'];
 export function GameRoomPage() {
   const { profile } = useApp();
-  const { claimReward } = useEconomy();
+  const { claimReward, recordGamePlayed } = useEconomy();
   const [, navigate] = useLocation();
   const session = useMemo(() => {
     try {
@@ -27,14 +28,16 @@ export function GameRoomPage() {
   const playerCount = Math.min(6, Math.max(2, session.playerCount ?? 2));
   const selectedGame = games.find((item) => item.id === (session as { gameId?: string }).gameId) ?? games[0];
   const gameTitle = selectedGame.nameRu;
+  const rules = selectedGame.id === 'transfer-durak' ? 'transfer' : 'throw-in';
   const names = useMemo(() => [profile.nickname, ...botNames.slice(0, playerCount - 1)],
     [playerCount, profile.nickname]);
-  const [game, setGame] = useState(() => createMultiplayerDurak(names));
+  const [game, setGame] = useState(() => createMultiplayerDurak(names, Math.random, rules));
   const [paused, setPaused] = useState(false);
   const [invalidMove, setInvalidMove] = useState<DurakCardError | null>(null);
   const [matchId, setMatchId] = useState(() => crypto.randomUUID());
   const [rewardShown, setRewardShown] = useState(false);
   const [departing, setDeparting] = useState<{ table: TablePair[]; motion: string } | null>(null);
+  const [transferChoice, setTransferChoice] = useState<PlayingCard | null>(null);
   const human = game.players[0];
   const openAttack = game.table.find((pair) => !pair.defense)?.attack;
   const allDefended = game.table.length > 0 && game.table.every((pair) => pair.defense);
@@ -52,10 +55,13 @@ export function GameRoomPage() {
   }, [departing, game, paused]);
 
   useEffect(() => {
-    if (!game.result || game.loserId === undefined || game.loserId === 0) return;
-    claimReward(`${selectedGame.id}-win:${matchId}`, 10);
-    setRewardShown(true);
-  }, [claimReward, game.loserId, game.result, matchId]);
+    if (!game.result) return;
+    recordGamePlayed(`${selectedGame.id}:${matchId}`);
+    if (game.loserId !== undefined && game.loserId !== 0) {
+      claimReward(`${selectedGame.id}-win:${matchId}`, 10);
+      setRewardShown(true);
+    }
+  }, [claimReward, game.loserId, game.result, matchId, recordGamePlayed, selectedGame.id]);
 
   const commitAction = (action: Parameters<typeof applyDurakAction>[1]) => {
     const next = applyDurakAction(game, action);
@@ -78,11 +84,24 @@ export function GameRoomPage() {
       setInvalidMove(error);
       return;
     }
+    if (game.phase === 'defend' && game.rules === 'transfer') {
+      const options = getDefenderCardOptions(game, card);
+      if (options.canDefend && options.canTransfer) {
+        setTransferChoice(card);
+        return;
+      }
+      if (options.canTransfer) {
+        commitAction({ type: 'transfer', cardId });
+        return;
+      }
+      commitAction({ type: 'defend', cardId });
+      return;
+    }
     commitAction({ type: 'play', cardId });
   };
   const restart = () => {
-    setGame(createMultiplayerDurak(names)); setMatchId(crypto.randomUUID());
-    setRewardShown(false); setPaused(false);
+    setGame(createMultiplayerDurak(names, Math.random, rules)); setMatchId(crypto.randomUUID());
+    setRewardShown(false); setPaused(false); setTransferChoice(null);
   };
   const exit = () => { if (window.confirm('Выйти из текущей партии?')) navigate('/play'); };
   const role = (id: number) => id === game.attacker ? 'АТАКУЕТ' : id === game.defender ? 'ЗАЩИЩАЕТСЯ' : 'ЖДЁТ';
@@ -97,7 +116,6 @@ export function GameRoomPage() {
 
       <section className="opponents-row">
         {game.players.slice(1).map((player) => <article className={player.id === game.actor ? 'table-player active' : 'table-player'} key={player.id}>
-          <UserAvatar nickname={player.name} avatar={null} className="player-badge" />
           <strong>{player.name}</strong><small>{player.hand.length} карт</small>
           <em>{player.id === game.actor ? 'ХОДИТ · ' : ''}{role(player.id)}</em>
         </article>)}
@@ -121,7 +139,7 @@ export function GameRoomPage() {
       </section>
 
       <section className="durak-actions">
-        {game.result ? <>{rewardShown && <strong className="match-token-reward">Победа · +10 жетонов</strong>}
+        {game.result ? <><MatchStreakStatus />{rewardShown && <strong className="match-token-reward">Победа · +10 жетонов</strong>}
           <button className="action-primary" onClick={restart}>Новая партия</button></> : <>
           <button type="button" disabled={!canTake || Boolean(departing)} className="action-secondary" onClick={() => commitAction({ type: 'take' })}>Взять</button>
           <button type="button" disabled={!canPass || Boolean(departing)} className="action-secondary" onClick={() => commitAction({ type: 'pass' })}>Пас</button>
@@ -132,7 +150,6 @@ export function GameRoomPage() {
 
       <section className="durak-player">
         <div className={humanTurn ? 'player-caption active' : 'player-caption'}>
-          <UserAvatar nickname={profile.nickname} avatar={profile.avatar} className="player-badge" />
           <div><strong>{profile.nickname}</strong><small>{human.hand.length} карт · {role(0)}</small></div>
         </div>
         <div className="player-hand">{human.hand.map((card) => <Card key={card.id} card={card}
@@ -146,6 +163,9 @@ export function GameRoomPage() {
         <button onClick={restart}>Начать заново</button><button className="danger-text" onClick={exit}>Выйти из игры</button>
       </div></div>}
       {invalidMove && <InvalidMoveDialog reason={invalidMove} onClose={() => setInvalidMove(null)} />}
+      {transferChoice && <TransferChoiceDialog card={transferChoice} onCancel={() => setTransferChoice(null)}
+        onDefend={() => { commitAction({ type: 'defend', cardId: transferChoice.id }); setTransferChoice(null); }}
+        onTransfer={() => { commitAction({ type: 'transfer', cardId: transferChoice.id }); setTransferChoice(null); }} />}
     </div>
   );
 }

@@ -2,25 +2,27 @@ import { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'wouter';
 import { PlayingCardView as Card } from '../components/PlayingCardView';
 import { DeckCover } from '../components/DeckCover';
-import { UserAvatar } from '../components/UserAvatar';
 import { InvalidMoveDialog } from '../components/InvalidMoveDialog';
+import { MatchStreakStatus } from '../components/MatchStreakStatus';
+import { TransferChoiceDialog } from '../components/TransferChoiceDialog';
 import { useApp } from '../lib/app-context';
 import { useEconomy } from '../lib/economy-context';
-import type { TablePair } from '../lib/card-engine';
+import type { PlayingCard, TablePair } from '../lib/card-engine';
 import {
-  applyDurakAction, createMultiplayerDurak, getDurakCardError, type DurakCardError,
+  applyDurakAction, createMultiplayerDurak, getDefenderCardOptions, getDurakCardError, type DurakCardError,
 } from '../lib/multiplayer-durak-engine';
 import { games } from '../lib/games';
 import { loadGameSession } from '../lib/game-session';
 
 export function LocalGameRoomPage() {
   const { profile } = useApp();
-  const { claimReward } = useEconomy();
+  const { claimReward, recordGamePlayed } = useEconomy();
   const [, navigate] = useLocation();
   const selectedGame = useMemo(() => {
     const id = loadGameSession().gameId;
     return games.find((game) => game.id === id) ?? games[0];
   }, []);
+  const rules = selectedGame.id === 'transfer-durak' ? 'transfer' : 'throw-in';
   const names = useMemo(() => {
     try {
       const stored = sessionStorage.getItem('cardverse-session');
@@ -28,12 +30,13 @@ export function LocalGameRoomPage() {
       return Array.from({ length: count }, (_, index) => index === 0 ? profile.nickname : `Игрок ${index + 1}`);
     } catch { return [profile.nickname, 'Игрок 2']; }
   }, [profile.nickname]);
-  const [game, setGame] = useState(() => createMultiplayerDurak(names));
+  const [game, setGame] = useState(() => createMultiplayerDurak(names, Math.random, rules));
   const [hidden, setHidden] = useState(true);
   const [invalidMove, setInvalidMove] = useState<DurakCardError | null>(null);
   const [matchId, setMatchId] = useState(() => crypto.randomUUID());
   const [rewardShown, setRewardShown] = useState(false);
   const [departing, setDeparting] = useState<{ table: TablePair[]; motion: string } | null>(null);
+  const [transferChoice, setTransferChoice] = useState<PlayingCard | null>(null);
   const actor = game.players[game.actor];
   const allDefended = game.table.length > 0 && game.table.every((pair) => pair.defense);
   const canTake = game.phase === 'defend' && game.table.some((pair) => !pair.defense);
@@ -61,22 +64,37 @@ export function LocalGameRoomPage() {
       setInvalidMove(error);
       return;
     }
+    if (game.phase === 'defend' && game.rules === 'transfer') {
+      const options = getDefenderCardOptions(game, card);
+      if (options.canDefend && options.canTransfer) {
+        setTransferChoice(card);
+        return;
+      }
+      if (options.canTransfer) {
+        act({ type: 'transfer', cardId });
+        return;
+      }
+      act({ type: 'defend', cardId });
+      return;
+    }
     act({ type: 'play', cardId });
   };
   const exit = () => { if (window.confirm('Выйти из партии?')) navigate('/play'); };
 
   useEffect(() => {
-    if (!game.result || game.loserId === undefined || game.loserId === 0) return;
-    claimReward(`local-${selectedGame.id}-win:${matchId}`, 10);
-    setRewardShown(true);
-  }, [claimReward, game.loserId, game.result, matchId]);
+    if (!game.result) return;
+    recordGamePlayed(`local-${selectedGame.id}:${matchId}`);
+    if (game.loserId !== undefined && game.loserId !== 0) {
+      claimReward(`local-${selectedGame.id}-win:${matchId}`, 10);
+      setRewardShown(true);
+    }
+  }, [claimReward, game.loserId, game.result, matchId, recordGamePlayed, selectedGame.id]);
 
   return (
     <div className="local-room">
       <header className="game-toolbar"><button onClick={exit}>×</button><div><strong>{selectedGame.nameRu} · локальная игра</strong><small>Козырь: {game.trump}</small></div><button>?</button></header>
       <section className="local-players">
         {game.players.map((player) => <article className={player.id === game.actor ? 'active' : ''} key={player.id}>
-          <UserAvatar nickname={player.name} avatar={player.id === 0 ? profile.avatar : null} />
           <strong>{player.name}</strong><small>{player.hand.length} карт</small>
         </article>)}
       </section>
@@ -98,9 +116,9 @@ export function LocalGameRoomPage() {
           <button type="button" disabled={!canEndBout || hidden} className="action-primary" onClick={() => act({ type: 'pass' })}>Бито</button>
           <small>{hidden ? 'Сначала нажми «Я готов»' : canTake ? 'Можно взять карты' : canEndBout ? 'Подкинь ещё или заверши заход' : 'Выбери подходящую карту'}</small>
         </>}
-        {game.result && <>{rewardShown && <strong className="match-token-reward">Победа · +10 жетонов</strong>}
+        {game.result && <><MatchStreakStatus />{rewardShown && <strong className="match-token-reward">Победа · +10 жетонов</strong>}
           <button className="action-primary" onClick={() => {
-            setGame(createMultiplayerDurak(names)); setMatchId(crypto.randomUUID());
+            setGame(createMultiplayerDurak(names, Math.random, rules)); setMatchId(crypto.randomUUID());
             setRewardShown(false); setHidden(true);
           }}>Новая партия</button></>}
       </section>
@@ -108,6 +126,9 @@ export function LocalGameRoomPage() {
         disabled={hidden} onClick={() => playCard(card.id)} />)}</div></section>
       {hidden && !game.result && <div className="pass-overlay"><div><span>↻</span><h2>Передайте устройство</h2><p>Сейчас ходит <strong>{actor.name}</strong></p><small>Не показывайте свои карты другим игрокам</small><button className="primary-button" onClick={() => setHidden(false)}>Я готов</button></div></div>}
       {invalidMove && <InvalidMoveDialog reason={invalidMove} onClose={() => setInvalidMove(null)} />}
+      {transferChoice && <TransferChoiceDialog card={transferChoice} onCancel={() => setTransferChoice(null)}
+        onDefend={() => { act({ type: 'defend', cardId: transferChoice.id }); setTransferChoice(null); }}
+        onTransfer={() => { act({ type: 'transfer', cardId: transferChoice.id }); setTransferChoice(null); }} />}
     </div>
   );
 }

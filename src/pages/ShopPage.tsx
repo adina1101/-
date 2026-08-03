@@ -3,7 +3,6 @@ import { Icon } from '../components/Icon';
 import { PageHeader } from '../components/PageHeader';
 import { PurchaseDialog } from '../components/PurchaseDialog';
 import { ShopItemCard } from '../components/ShopItemCard';
-import { AvatarItemDialog } from '../components/AvatarItemDialog';
 import { useEconomy } from '../lib/economy-context';
 import { shopCategories, shopItems, type ShopCategory, type ShopItem } from '../lib/shop-data';
 import { useApp } from '../lib/app-context';
@@ -11,13 +10,11 @@ import { shopCategoryCopy, shopItemText, shopText } from '../lib/shop-i18n';
 
 export function ShopPage() {
   const { tokens, owned, equipped, purchase, equip } = useEconomy();
-  const { language, profile } = useApp();
+  const { language } = useApp();
   const [category, setCategory] = useState<'all' | ShopCategory>('all');
   const [selected, setSelected] = useState<ShopItem | null>(null);
   const [success, setSuccess] = useState<ShopItem | null>(null);
-  const visible = shopItems.filter((item) =>
-    (category === 'all' || item.category === category)
-    && (!item.gender || item.gender === profile.gender));
+  const visible = shopItems.filter((item) => category === 'all' || item.category === category);
 
   const confirmPurchase = () => {
     if (!selected || !purchase(selected.id, selected.price, selected.slot)) return;
@@ -42,11 +39,7 @@ export function ShopPage() {
           affordable={tokens >= item.price} onBuy={() => setSelected(item)}
           onEquip={() => item.slot && equip(item.id, item.slot)} onPreview={() => setSelected(item)} />)}
       </div>
-      {selected && selected.slot && selected.slot !== 'deck' && <AvatarItemDialog item={selected} owned={owned.includes(selected.id)}
-        equipped={equipped[selected.slot] === selected.id} affordable={tokens >= selected.price}
-        onClose={() => setSelected(null)} onBuy={confirmPurchase}
-        onEquip={() => { equip(selected.id, selected.slot!); setSelected(null); }} />}
-      {selected && (!selected.slot || selected.slot === 'deck') && <PurchaseDialog item={selected}
+      {selected && <PurchaseDialog item={selected}
         owned={owned.includes(selected.id)} equipped={selected.slot ? equipped[selected.slot] === selected.id : false}
         onCancel={() => setSelected(null)} onConfirm={confirmPurchase}
         onEquip={() => { if (selected.slot) equip(selected.id, selected.slot); setSelected(null); }} />}

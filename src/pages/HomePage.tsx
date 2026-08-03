@@ -2,7 +2,8 @@ import { Link } from 'wouter';
 import { Icon } from '../components/Icon';
 import { useApp } from '../lib/app-context';
 import { useEconomy } from '../lib/economy-context';
-import { UserAvatar } from '../components/UserAvatar';
+import { ProfilePhoto } from '../components/ProfilePhoto';
+import { StreakCard } from '../components/StreakCard';
 
 export function HomePage() {
   const { t, profile } = useApp();
@@ -12,13 +13,14 @@ export function HomePage() {
       <header className="home-top">
         <div className="brand-lockup"><div className="brand-mark"><span>♠</span></div><strong>CARDI<span>X</span></strong></div>
         <div className="balance"><Icon name="token" /> {tokens}</div>
-        <Link href="/profile" className="avatar"><UserAvatar nickname={profile.nickname} avatar={profile.avatar} /></Link>
+        <Link href="/profile" className="profile-link"><ProfilePhoto photo={profile.photo} /></Link>
       </header>
 
       <section className="welcome">
         <p>{t('greeting')},</p>
         <h1>{profile.nickname} <span>♥</span></h1>
       </section>
+      <StreakCard compact />
 
       <section className="hero-card">
         <img className="hero-brand-art" src="/assets/cardix-brand.png" alt="" />

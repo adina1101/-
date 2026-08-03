@@ -2,7 +2,8 @@ import type { ReactNode } from 'react';
 import { Link, useLocation } from 'wouter';
 import { useApp } from '../lib/app-context';
 import { Icon } from './Icon';
-import { UserAvatar } from './UserAvatar';
+import { ProfilePhoto } from './ProfilePhoto';
+import { OfflineBanner } from './OfflineBanner';
 
 const navItems = [
   { href: '/rules', icon: 'rules', label: 'rules' },
@@ -19,18 +20,19 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { t, profile } = useApp();
 
   if (location === '/game' || location === '/local-game') {
-    return <div className="app-frame game-frame"><main className="app-content">{children}</main></div>;
+    return <div className="app-frame game-frame"><OfflineBanner /><main className="app-content">{children}</main></div>;
   }
 
   return (
     <div className="app-frame">
+      <OfflineBanner />
       <main className="app-content">{children}</main>
       <nav className="bottom-nav" aria-label="Main navigation">
         {navItems.map((item) => (
           <Link key={item.href} href={item.href}
             className={location.startsWith(item.href) ? 'nav-item active' : 'nav-item'}>
             {item.href === '/profile'
-              ? <UserAvatar nickname={profile.nickname} avatar={profile.avatar} className="nav-user-avatar" />
+              ? <ProfilePhoto photo={profile.photo} className="nav-profile-photo" />
               : <Icon name={item.icon} />}
             <span>{t(item.label)}</span>
           </Link>

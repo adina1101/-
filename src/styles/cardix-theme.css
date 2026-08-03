@@ -35,16 +35,12 @@ body { background: radial-gradient(circle at 50% 0,#11152a,var(--bg) 48%); }
 .detail-hero,.table-preview { background:radial-gradient(circle,#33101b,#080a16 70%); border:1px solid #3c1720; }
 .progress i { background:linear-gradient(90deg,#bd0c18,#ff3340); box-shadow:0 0 9px #f21f2d88; }
 .token-balance .icon,.balance .icon { color:#f4f4f7; }
-.avatar,.profile-avatar { border-color:var(--red); background:linear-gradient(145deg,#3b4157,#101321); }
-.profile-avatar span { color:#fff; background:var(--red); }
 .durak-room { background:radial-gradient(ellipse at 50% 43%,#151a31,#070916 65%,#02030a); }
 .durak-table { border-color:#5d203055; box-shadow:inset 0 0 75px #000b,0 0 40px #f21f2d0a; }
 .deck-cover,.opponent-hand i { color:#ff424e; border-color:#eee; background:repeating-linear-gradient(45deg,#161a2d 0 6px,#080a14 6px 12px); }
 .action-primary,.move-button { color:#fff; background:linear-gradient(135deg,#ff2937,#bf0916); }
 .action-secondary { color:#fff; border-color:#792430; background:#210c14; }
 .game-message { color:#fff; text-shadow:0 0 12px #f21f2d; }
-.player-badge { border-color:var(--red); background:linear-gradient(145deg,#ed2633,#7e111a); }
-.player-badge.rival { border-color:#dadce6; background:#171a2c; color:#fff; }
 .pause-card { border-color:#3b4057; background:linear-gradient(160deg,#15192b,#090b16); }
 :root[data-theme='light'] .app-frame { background:linear-gradient(180deg,#fff,var(--bg)); }
 :root[data-theme='light'] .bottom-nav { background:rgba(255,255,255,.96); }

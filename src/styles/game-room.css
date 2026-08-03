@@ -5,13 +5,10 @@
 .durak-opponent { display: flex; align-items: center; gap: 9px; padding: 10px 4px; }.durak-opponent strong,.player-caption strong { display: block; font-size: 11px; }.durak-opponent small,.player-caption small { color: #9db5ab; font-size: 8px; }
 .opponents-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(52px,1fr)); gap:5px; padding:5px 0; }
 .table-player { position:relative; min-width:0; display:flex; flex-direction:column; align-items:center; padding:6px 2px; border:1px solid transparent; border-radius:13px; color:#777c8e; transition:.3s ease; }
-.table-player .player-badge { width:31px; height:31px; border-width:1px; font-size:8px; filter:grayscale(.75); }
-.table-player strong { width:100%; margin-top:4px; overflow:hidden; color:#8d91a1; font-size:7px; text-align:center; text-overflow:ellipsis; white-space:nowrap; }
+.table-player strong { width:100%; overflow:hidden; color:#8d91a1; font-size:8px; text-align:center; text-overflow:ellipsis; white-space:nowrap; }
 .table-player small { margin-top:2px; font-size:6px; }.table-player em { margin-top:3px; color:#626678; font-size:5px; font-style:normal; letter-spacing:.6px; }
 .table-player.active { border-color:#6d2631; background:linear-gradient(145deg,#2c1018,#0b0d19); box-shadow:0 0 20px #f21f2d25; transform:translateY(2px); }
-.table-player.active .player-badge { filter:none; border-color:#fff; box-shadow:0 0 0 2px var(--red),0 0 14px #f21f2d66; }
 .table-player.active strong { color:#fff; }.table-player.active small { color:#c3c5ce; }.table-player.active em { color:#ff5c68; font-weight:800; }
-.player-badge { width: 38px; height: 38px; display: grid; place-items: center; border: 2px solid var(--green); border-radius: 50%; background: #c36d3f; font-size: 11px; font-weight: 800; }.player-badge.rival { border-color: #9a6ddd; background: #422965; color: #d8c5fb; }
 .opponent-hand { display: flex; margin-left: auto; padding-right: 12px; }.opponent-hand i { width: 20px; height: 31px; margin-right: -13px; transform: rotate(5deg); border: 2px solid #dce7e0; border-radius: 4px; background: repeating-linear-gradient(45deg,#176344 0 4px,#0e3627 4px 8px); }
 .durak-table { position:relative; min-height:clamp(245px,40vh,330px); display:flex; flex-direction:column; align-items:center; justify-content:center; border:1px solid #7ab39738; border-radius:42%; box-shadow:inset 0 0 60px #03130c99; }
 .battle-pairs { max-width: 250px; display: flex; flex-wrap: wrap; justify-content: center; gap: 11px; }.battle-pairs > p { color: #a9c4b8; font-size: 11px; }
@@ -51,9 +48,15 @@
 .durak-actions button:not(:disabled):active { transform:scale(.95); }
 .durak-actions button:disabled { opacity:.32; cursor:not-allowed; filter:grayscale(.7); }
 .durak-actions small { flex-basis:100%; color:#8f93a3; font-size:7px; text-align:center; }
+.transfer-choice-backdrop { z-index:140; }
+.transfer-choice-dialog { width:min(92vw,360px); display:flex; flex-direction:column; align-items:center; gap:12px; padding:24px; border:1px solid #56313b; border-radius:22px; background:linear-gradient(160deg,#181b2c,#080a14); box-shadow:0 22px 70px #000c,0 0 32px #f21f2d22; text-align:center; }
+.transfer-choice-dialog h2 { font-size:18px; }.transfer-choice-dialog p { color:#9da1b2; font-size:10px; line-height:1.45; }
+.transfer-choice-dialog .durak-card { width:76px; height:114px; opacity:1; }
+.transfer-choice-actions { width:100%; display:grid; grid-template-columns:1fr 1fr; gap:9px; }.transfer-choice-actions button { padding:12px; border-radius:12px; font-size:11px; font-weight:800; }
+.transfer-choice-cancel { color:#8f93a3; background:transparent; font-size:9px; }
 .action-primary { background:var(--green); color:#fff; }.action-secondary { border:1px solid #792430; background:#210c14; color:#fff; }.action-give { background:#f1c166; color:#241704; }
 .match-token-reward { padding:10px 14px; border:1px solid #e7b34f66; border-radius:12px; color:#ffd36b; background:#3a260d; font-size:10px; box-shadow:0 0 18px #e9b64c33; animation:success-pop .35s ease; }
-.durak-player { min-height:118px; }.player-caption { width:max-content; display:flex; align-items:center; gap:9px; margin-bottom:2px; padding:3px 9px 3px 3px; border:1px solid transparent; border-radius:25px; transition:.25s; }.player-caption.active { border-color:#6d2631; background:#250d15; box-shadow:0 0 18px #f21f2d22; }
+.durak-player { min-height:118px; }.player-caption { width:max-content; display:flex; align-items:center; gap:9px; margin-bottom:2px; padding:7px 12px; border:1px solid transparent; border-radius:14px; transition:.25s; }.player-caption.active { border-color:#6d2631; background:#250d15; box-shadow:0 0 18px #f21f2d22; }
 .player-hand { display: grid; grid-template-columns: repeat(auto-fit,minmax(38px,1fr)); align-items: end; justify-items: center; gap: 4px; width: 100%; padding: 8px 2px 0; }
 .player-hand .durak-card { width: 100%; max-width: 62px; height: auto; aspect-ratio: 2 / 3; min-height: 73px; animation: deal-to-hand .42s cubic-bezier(.2,.8,.2,1) both; }
 .player-hand .durak-card:nth-child(2n) { transform: translateY(3px) rotate(1.5deg); }.player-hand .durak-card:nth-child(2n+1) { transform: rotate(-1.5deg); }
@@ -72,4 +75,6 @@
 @keyframes clear-cards { to { opacity: 0; transform: translateX(-180px) scale(.65) rotate(-18deg); } }
 @keyframes deck-breathe { 50% { transform: translateY(-2px); box-shadow: 0 10px 18px #0008; } }
 @keyframes trump-suit-in { from { opacity:0; transform:scale(.65) rotate(-12deg); } }
-@media (max-height:720px) { .durak-room{grid-template-rows:auto auto minmax(220px,1fr) auto auto;padding-top:6px}.durak-table{min-height:220px}.durak-player{min-height:102px}.player-hand{padding-top:2px}.player-hand .durak-card{max-width:49px;min-height:69px}.table-player{padding:3px 2px}.table-player .player-badge{width:27px;height:27px}.game-message{bottom:10px}.durak-actions{min-height:38px;padding:3px} }
+@media (max-height:720px) { .durak-room{grid-template-rows:auto auto minmax(220px,1fr) auto auto;padding-top:6px}.durak-table{min-height:220px}.durak-player{min-height:102px}.player-hand{padding-top:2px}.player-hand .durak-card{max-width:49px;min-height:69px}.table-player{padding:3px 2px}.game-message{bottom:10px}.durak-actions{min-height:38px;padding:3px} }
+.match-streak-status { display:flex; align-items:center; justify-content:center; gap:8px; min-width:180px; padding:8px 12px; border:1px solid #6a3e2655; border-radius:12px; background:#24170f; text-align:left; }
+.match-streak-status > span { font-size:24px; filter:drop-shadow(0 0 7px #ff812b88); }.match-streak-status div { display:flex; flex-direction:column; }.match-streak-status strong { color:#fff; font-size:10px; }.match-streak-status small { margin-top:2px; color:#d89b5c; font-size:7px; }

@@ -42,6 +42,7 @@ export function PlayModePage({ mode }: { mode: string }) {
   const [, navigate] = useLocation();
   const validMode: Mode = ['ai', 'online', 'local', 'tournament'].includes(mode) ? mode as Mode : 'ai';
   const text = copy[language];
+  const invitedFriend = validMode === 'online' ? sessionStorage.getItem('cardix-invited-friend') : null;
   const [choice, setChoice] = useState(modeOptions[validMode][0] ?? '');
   const [playerCount, setPlayerCount] = useState(() => {
     const selected = sessionStorage.getItem('cardverse-selected-game');
@@ -60,8 +61,9 @@ export function PlayModePage({ mode }: { mode: string }) {
 
   const start = () => {
     sessionStorage.setItem('cardverse-session', JSON.stringify({
-      gameId, mode: validMode, choice, playerCount,
+      gameId, mode: validMode, choice, playerCount, invitedFriend,
     }));
+    if (invitedFriend) sessionStorage.removeItem('cardix-invited-friend');
     setStatus(validMode === 'online' ? 'searching' : 'ready');
     if (validMode === 'online') window.setTimeout(() => setStatus('ready'), 1300);
   };
@@ -89,6 +91,14 @@ export function PlayModePage({ mode }: { mode: string }) {
   return (
     <div className="screen setup-screen">
       <PageHeader title={text[validMode][0]} subtitle={text[validMode][1]} back="/play" />
+      {invitedFriend && <div className="invited-friend-banner">
+        <Icon name="check" />
+        <span>{language === 'ru' ? `Приглашение для ${invitedFriend} готово` : `Invitation for ${invitedFriend} is ready`}</span>
+        <button type="button" onClick={() => {
+          sessionStorage.removeItem('cardix-invited-friend');
+          navigate('/friends');
+        }}>×</button>
+      </div>}
       <h2 className="setup-label">{text.game}</h2>
       <select className="game-select" value={gameId} onChange={(event) => {
         const nextGame = games.find((game) => game.id === event.target.value);

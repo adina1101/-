@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'wouter';
 import { PlayingCardView as Card } from '../components/PlayingCardView';
-import { UserAvatar } from '../components/UserAvatar';
+import { MatchStreakStatus } from '../components/MatchStreakStatus';
 import { createDeck, type PlayingCard } from '../lib/card-engine';
 import { useApp } from '../lib/app-context';
 import { useEconomy } from '../lib/economy-context';
@@ -31,7 +31,7 @@ function createRound(count: number): RoundState {
 
 export function ClassicGameRoomPage({ session }: { session: GameSession }) {
   const { profile, language } = useApp();
-  const { claimReward } = useEconomy();
+  const { claimReward, recordGamePlayed } = useEconomy();
   const [, navigate] = useLocation();
   const selected = games.find((game) => game.id === session.gameId) ?? games[0];
   const title = language === 'ru' ? selected.nameRu : selected.nameEn;
@@ -81,9 +81,10 @@ export function ClassicGameRoomPage({ session }: { session: GameSession }) {
   }, [names, resolving, session.playerCount]);
 
   useEffect(() => {
-    if (!state.result || state.scores[0] !== Math.max(...state.scores)) return;
-    claimReward(`${session.gameId}-win:${matchId}`, 10);
-  }, [claimReward, matchId, session.gameId, state.result, state.scores]);
+    if (!state.result) return;
+    recordGamePlayed(`${session.gameId}:${matchId}`);
+    if (state.scores[0] === Math.max(...state.scores)) claimReward(`${session.gameId}-win:${matchId}`, 10);
+  }, [claimReward, matchId, recordGamePlayed, session.gameId, state.result, state.scores]);
 
   const restart = () => { setState(createRound(session.playerCount)); setMatchId(crypto.randomUUID()); };
   return <div className="durak-room">
@@ -91,7 +92,7 @@ export function ClassicGameRoomPage({ session }: { session: GameSession }) {
       <div><strong>{title} · {session.playerCount} игроков</strong><small>Отдельная партия</small></div><button>?</button>
     </header>
     <section className="opponents-row">{names.slice(1).map((name, index) => <article className="table-player" key={name}>
-      <UserAvatar nickname={name} avatar={null} className="player-badge" /><strong>{name}</strong>
+      <strong>{name}</strong>
       <small>{state.hands[index + 1].length} карт</small><em>{state.scores[index + 1]} очк.</em>
     </article>)}</section>
     <section className="durak-table">
@@ -101,10 +102,9 @@ export function ClassicGameRoomPage({ session }: { session: GameSession }) {
       <p className="game-message">{state.result ?? state.message}</p>
     </section>
     <section className="durak-actions">{state.result
-      ? <><strong className="match-token-reward">{state.result}{state.scores[0] === Math.max(...state.scores) ? ' · +10 жетонов' : ''}</strong><button className="action-primary" onClick={restart}>Новая партия</button></>
+      ? <><MatchStreakStatus /><strong className="match-token-reward">{state.result}{state.scores[0] === Math.max(...state.scores) ? ' · +10 жетонов' : ''}</strong><button className="action-primary" onClick={restart}>Новая партия</button></>
       : <small>{resolving ? 'Карты на столе…' : 'Нажмите любую карту, чтобы сделать ход'}</small>}</section>
     <section className="durak-player"><div className="player-caption active">
-      <UserAvatar nickname={profile.nickname} avatar={profile.avatar} className="player-badge" />
       <div><strong>{profile.nickname}</strong><small>{state.scores[0]} очк.</small></div></div>
       <div className="player-hand">{state.hands[0].map((card) => <Card key={card.id} card={card} disabled={resolving} onClick={() => play(card.id)} />)}</div>
     </section>

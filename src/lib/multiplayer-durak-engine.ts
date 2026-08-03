@@ -2,8 +2,11 @@ import { canBeat, canThrow, createDeck, type PlayingCard, type TablePair } from 
 
 export interface DurakPlayer { id: number; name: string; hand: PlayingCard[] }
 export type DurakPhase = 'attack' | 'defend' | 'throw' | 'taking';
+export type DurakRules = 'throw-in' | 'transfer';
 export type DurakAction =
   | { type: 'play'; cardId: string }
+  | { type: 'defend'; cardId: string }
+  | { type: 'transfer'; cardId: string }
   | { type: 'take' }
   | { type: 'pass' };
 export type DurakCardError = 'finished' | 'no-attack' | 'cannot-beat' | 'wait-defense' | 'attack-limit' | 'rank-mismatch';
@@ -24,6 +27,7 @@ export interface MultiplayerDurak {
   message: string;
   result?: string;
   loserId?: number;
+  rules: DurakRules;
 }
 
 export const activePlayerIds = (game: MultiplayerDurak) =>
@@ -42,7 +46,8 @@ function firstThrower(game: MultiplayerDurak) {
   return nextPlayer(game.players, game.attacker, [game.defender]);
 }
 
-export function createMultiplayerDurak(names: string[], random: () => number = Math.random): MultiplayerDurak {
+export function createMultiplayerDurak(names: string[], random: () => number = Math.random,
+  rules: DurakRules = 'throw-in'): MultiplayerDurak {
   if (names.length < 2 || names.length > 6) throw new Error('Durak supports 2–6 players');
   const deck = createDeck(random);
   const trumpCard = deck[0];
@@ -56,11 +61,23 @@ export function createMultiplayerDurak(names: string[], random: () => number = M
   const attacker = lowestTrump?.id ?? 0;
   const defender = nextPlayer(players, attacker);
   return {
-    players, deck, discarded: [], trump: trumpCard.suit, trumpCard, table: [],
+    players, deck, discarded: [], trump: trumpCard.suit, trumpCard, table: [], rules,
     attacker, defender, actor: attacker, phase: 'attack',
     defenderStartCards: players[defender].hand.length, passed: [],
     message: `${players[attacker].name} атакует ${players[defender].name}`,
   };
+}
+
+export function getDefenderCardOptions(game: MultiplayerDurak, card: PlayingCard) {
+  const attacks = game.table.filter((pair) => !pair.defense).map((pair) => pair.attack);
+  const canDefend = game.phase === 'defend'
+    && attacks.some((attack) => canBeat(attack, card, game.trump));
+  const nextDefender = nextPlayer(game.players, game.defender, [game.defender]);
+  const canTransfer = game.rules === 'transfer' && game.phase === 'defend' && attacks.length > 0
+    && game.table.every((pair) => !pair.defense && pair.attack.rank === card.rank)
+    && nextDefender !== game.defender
+    && game.table.length + 1 <= Math.min(6, game.players[nextDefender].hand.length);
+  return { canDefend, canTransfer };
 }
 
 export function getDurakCardError(game: MultiplayerDurak, card: PlayingCard): DurakCardError | null {
@@ -68,7 +85,8 @@ export function getDurakCardError(game: MultiplayerDurak, card: PlayingCard): Du
   if (game.phase === 'defend') {
     const openAttacks = game.table.filter((pair) => !pair.defense).map((pair) => pair.attack);
     if (!openAttacks.length) return 'no-attack';
-    return openAttacks.some((attack) => canBeat(attack, card, game.trump)) ? null : 'cannot-beat';
+    const options = getDefenderCardOptions(game, card);
+    return options.canDefend || options.canTransfer ? null : 'cannot-beat';
   }
   if (game.phase !== 'taking' && game.table.some((pair) => !pair.defense)) return 'wait-defense';
   if (game.table.length >= Math.min(6, game.defenderStartCards)) return 'attack-limit';
@@ -83,6 +101,11 @@ function playCard(game: MultiplayerDurak, cardId: string): MultiplayerDurak {
   const current = game.players[game.actor];
   const card = current.hand.find((item) => item.id === cardId);
   if (!card || !canPlayDurakCard(game, card)) return game;
+  if (game.phase === 'defend') {
+    const options = getDefenderCardOptions(game, card);
+    if (!options.canDefend && options.canTransfer) return transferCard(game, cardId);
+    if (!options.canDefend) return game;
+  }
   const players = game.players.map((player) => ({ ...player, hand: [...player.hand] }));
   players[game.actor].hand = players[game.actor].hand.filter((item) => item.id !== card.id);
   if (game.phase !== 'defend') {
@@ -101,6 +124,21 @@ function playCard(game: MultiplayerDurak, cardId: string): MultiplayerDurak {
     table: game.table.map((pair) => pair === open ? { ...pair, defense: card } : pair),
     actor: firstThrower({ ...game, players }), phase: 'throw', passed: [],
     message: 'Карта отбита — остальные игроки могут подкинуть',
+  };
+}
+
+function transferCard(game: MultiplayerDurak, cardId: string): MultiplayerDurak {
+  const current = game.players[game.actor];
+  const card = current.hand.find((item) => item.id === cardId);
+  if (!card || !getDefenderCardOptions(game, card).canTransfer) return game;
+  const players = game.players.map((player) => ({ ...player, hand: [...player.hand] }));
+  players[game.actor].hand = players[game.actor].hand.filter((item) => item.id !== card.id);
+  const nextDefender = nextPlayer(players, game.defender, [game.defender]);
+  return {
+    ...game, players, table: [...game.table, { attack: card }],
+    attacker: game.defender, defender: nextDefender, actor: nextDefender,
+    defenderStartCards: players[nextDefender].hand.length, phase: 'defend', passed: [],
+    message: `${current.name} переводит на ${players[nextDefender].name}`,
   };
 }
 
@@ -149,6 +187,8 @@ function passAttack(game: MultiplayerDurak) {
 export function applyDurakAction(game: MultiplayerDurak, action: DurakAction): MultiplayerDurak {
   if (game.result) return game;
   if (action.type === 'play') return playCard(game, action.cardId);
+  if (action.type === 'defend') return playCard(game, action.cardId);
+  if (action.type === 'transfer') return transferCard(game, action.cardId);
   if (action.type === 'take' && game.phase === 'defend' && game.actor === game.defender) {
     const actor = firstThrower(game);
     return { ...game, actor, phase: 'taking', passed: [], message: `${game.players[game.defender].name} берёт — можно подкинуть` };
@@ -162,7 +202,12 @@ export function chooseDurakAction(game: MultiplayerDurak): DurakAction | null {
   const player = game.players[game.actor];
   const playable = player.hand.filter((card) => canPlayDurakCard(game, card))
     .sort((a, b) => (a.suit === game.trump ? 20 : 0) + a.value - ((b.suit === game.trump ? 20 : 0) + b.value));
-  if (playable[0]) return { type: 'play', cardId: playable[0].id };
+  if (playable[0]) {
+    const options = getDefenderCardOptions(game, playable[0]);
+    if (options.canTransfer) return { type: 'transfer', cardId: playable[0].id };
+    if (options.canDefend) return { type: 'defend', cardId: playable[0].id };
+    return { type: 'play', cardId: playable[0].id };
+  }
   if (game.phase === 'defend') return { type: 'take' };
   if (game.phase === 'throw' || game.phase === 'taking') return { type: 'pass' };
   return null;

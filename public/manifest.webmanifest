@@ -1,0 +1,17 @@
+{
+  "name": "CARDIX — карточные игры",
+  "short_name": "CARDIX",
+  "description": "Карточные игры онлайн и без интернета",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#030511",
+  "theme_color": "#030511",
+  "icons": [
+    {
+      "src": "/assets/cardix-brand.png",
+      "sizes": "1254x1254",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

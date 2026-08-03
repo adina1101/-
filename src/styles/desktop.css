@@ -68,7 +68,7 @@
   .durak-table { min-height:clamp(320px,48vh,430px); border-radius:220px; }
   .battle-pairs { max-width:460px; gap:18px; }
   .opponents-row { max-width:760px; width:100%; margin:auto; gap:12px; }
-  .table-player { padding:8px; }.table-player .player-badge { width:38px; height:38px; }
+  .table-player { padding:8px; }
   .durak-player { max-width:900px; width:100%; margin:auto; }
   .player-hand { grid-template-columns:repeat(auto-fit,minmax(55px,1fr)); gap:8px; }
   .player-hand .durak-card { max-width:68px; min-height:96px; }

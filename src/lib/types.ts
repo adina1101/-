@@ -1,23 +1,9 @@
 export type Language = 'ru' | 'en';
 export type Theme = 'dark' | 'light';
 export type GameCategory = 'popular' | 'poker' | 'casino' | 'solitaire';
-export type AvatarGender = 'boy' | 'girl';
-export type BoyHairStyle = 'mullet' | 'french-fade' | 'buzz' | 'bowl';
-export type GirlHairStyle = 'layers' | 'bun' | 'waves' | 'braid';
-
-export interface AvatarAppearance {
-  boyHairStyle: BoyHairStyle;
-  girlHairStyle: GirlHairStyle;
-  hairColor: string;
-  skinTone: string;
-  eyeColor: string;
-}
-
-export interface AvatarProfile {
+export interface UserProfile {
   nickname: string;
-  avatar: string | null;
-  gender: AvatarGender;
-  appearance: AvatarAppearance;
+  photo: string | null;
 }
 
 export interface Game {

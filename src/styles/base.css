@@ -48,7 +48,12 @@ a { color: inherit; text-decoration: none; }
 }
 .app-content { min-height: 100vh; }
 .screen { padding: 28px 20px 112px; animation: enter .35s ease; }
+.offline-banner { position:fixed; z-index:200; top:8px; left:50%; width:max-content; max-width:calc(100% - 28px); padding:7px 12px; transform:translateX(-50%); border:1px solid #6b3f25; border-radius:20px; color:#ffd09a; background:#20150eef; box-shadow:0 8px 24px #0008; font-size:9px; font-weight:800; text-align:center; }
 @keyframes enter { from { opacity: 0; transform: translateY(8px); } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior:auto !important; animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; }
+}
 
 @media (min-width: 760px) {
   body { padding: 20px 0; }
