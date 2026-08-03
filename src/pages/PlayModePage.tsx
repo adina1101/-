@@ -5,7 +5,7 @@ import { PageHeader } from '../components/PageHeader';
 import { useApp } from '../lib/app-context';
 import { games } from '../lib/games';
 
-type Mode = 'ai' | 'online' | 'local' | 'tournament';
+type Mode = 'ai' | 'online' | 'local' | 'tournament' | 'practice';
 
 const copy = {
   ru: {
@@ -13,6 +13,7 @@ const copy = {
     online: ['Онлайн', 'Найди соперников или создай комнату'],
     local: ['На одном устройстве', 'Настрой локальную партию'],
     tournament: ['Турниры', 'Выбери соревнование'],
+    practice: ['Практический режим', 'Тренируйся без потери жетонов'],
     game: 'Игра', players: 'Количество участников', difficulty: 'Сложность',
     mode: 'Режим', start: 'Начать игру', searching: 'Ищем игроков…',
     ready: 'Всё готово!', cancel: 'Отменить', code: 'Код комнаты',
@@ -23,6 +24,7 @@ const copy = {
     online: ['Online', 'Find opponents or create a room'],
     local: ['Local multiplayer', 'Set up a local match'],
     tournament: ['Tournaments', 'Choose a competition'],
+    practice: ['Practice mode', 'Train without losing tokens'],
     game: 'Game', players: 'Number of players', difficulty: 'Difficulty',
     mode: 'Mode', start: 'Start game', searching: 'Finding players…',
     ready: 'All set!', cancel: 'Cancel', code: 'Room code',
@@ -35,12 +37,13 @@ const modeOptions: Record<Mode, string[]> = {
   online: ['Быстрый матч', 'Случайные соперники', 'Создать комнату', 'Войти по коду'],
   local: [],
   tournament: ['Ежедневный турнир', 'Недельная лига', 'Кубок CARDIX'],
+  practice: ['Легко', 'Средне', 'Сложно', 'Эксперт'],
 };
 
 export function PlayModePage({ mode }: { mode: string }) {
   const { language } = useApp();
   const [, navigate] = useLocation();
-  const validMode: Mode = ['ai', 'online', 'local', 'tournament'].includes(mode) ? mode as Mode : 'ai';
+  const validMode: Mode = ['ai', 'online', 'local', 'tournament', 'practice'].includes(mode) ? mode as Mode : 'ai';
   const text = copy[language];
   const invitedFriend = validMode === 'online' ? sessionStorage.getItem('cardix-invited-friend') : null;
   const [choice, setChoice] = useState(modeOptions[validMode][0] ?? '');
@@ -78,7 +81,7 @@ export function PlayModePage({ mode }: { mode: string }) {
         <h1>{status === 'ready' ? text.ready : text.searching}</h1>
         <p>{game?.[language === 'ru' ? 'nameRu' : 'nameEn']} · {playerCount} {text.people}</p>
         {status === 'ready' && <div className="players-preview">
-          {Array.from({ length: playerCount }, (_, index) => <span key={index}>{index === 0 ? 'A' : validMode === 'ai' ? 'AI' : index + 1}</span>)}
+          {Array.from({ length: playerCount }, (_, index) => <span key={index}>{index === 0 ? 'A' : validMode === 'ai' || validMode === 'practice' ? 'AI' : index + 1}</span>)}
         </div>}
         <button className="primary-button" onClick={() => status === 'ready'
           ? navigate(validMode === 'local' ? '/local-game' : '/game') : setStatus('setup')}>
@@ -116,7 +119,7 @@ export function PlayModePage({ mode }: { mode: string }) {
             onClick={() => setPlayerCount(count)}><strong>{count}</strong><small>{language === 'ru' ? 'игр.' : 'pl.'}</small></button>)}
         </div></>}
 
-      {modeOptions[validMode].length > 0 && <><h2 className="setup-label">{validMode === 'ai' ? text.difficulty : text.mode}</h2>
+      {modeOptions[validMode].length > 0 && <><h2 className="setup-label">{validMode === 'ai' || validMode === 'practice' ? text.difficulty : text.mode}</h2>
         <div className="choice-list">{modeOptions[validMode].map((option) => <button key={option}
           className={choice === option ? 'choice active' : 'choice'} onClick={() => setChoice(option)}>
           <span>{option}</span>{choice === option && <Icon name="check" />}

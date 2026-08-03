@@ -22,11 +22,12 @@ export function GameRoomPage() {
   const session = useMemo(() => {
     try {
       const saved = sessionStorage.getItem('cardverse-session');
-      return saved ? JSON.parse(saved) as { playerCount?: number } : {};
+      return saved ? JSON.parse(saved) as { playerCount?: number; gameId?: string; mode?: string } : {};
     } catch { return {}; }
   }, []);
   const playerCount = Math.min(6, Math.max(2, session.playerCount ?? 2));
-  const selectedGame = games.find((item) => item.id === (session as { gameId?: string }).gameId) ?? games[0];
+  const selectedGame = games.find((item) => item.id === session.gameId) ?? games[0];
+  const practice = session.mode === 'practice';
   const gameTitle = selectedGame.nameRu;
   const rules = selectedGame.id === 'transfer-durak' ? 'transfer' : 'throw-in';
   const names = useMemo(() => [profile.nickname, ...botNames.slice(0, playerCount - 1)],
@@ -57,11 +58,11 @@ export function GameRoomPage() {
   useEffect(() => {
     if (!game.result) return;
     recordGamePlayed(`${selectedGame.id}:${matchId}`);
-    if (game.loserId !== undefined && game.loserId !== 0) {
+    if (!practice && game.loserId !== undefined && game.loserId !== 0) {
       claimReward(`${selectedGame.id}-win:${matchId}`, 10);
       setRewardShown(true);
     }
-  }, [claimReward, game.loserId, game.result, matchId, recordGamePlayed, selectedGame.id]);
+  }, [claimReward, game.loserId, game.result, matchId, practice, recordGamePlayed, selectedGame.id]);
 
   const commitAction = (action: Parameters<typeof applyDurakAction>[1]) => {
     const next = applyDurakAction(game, action);

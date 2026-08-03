@@ -2,7 +2,7 @@ import { games } from './games';
 
 export interface GameSession {
   gameId: string;
-  mode: 'ai' | 'online' | 'local' | 'tournament';
+  mode: 'ai' | 'online' | 'local' | 'tournament' | 'practice';
   playerCount: number;
 }
 

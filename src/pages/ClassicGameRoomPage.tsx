@@ -83,7 +83,9 @@ export function ClassicGameRoomPage({ session }: { session: GameSession }) {
   useEffect(() => {
     if (!state.result) return;
     recordGamePlayed(`${session.gameId}:${matchId}`);
-    if (state.scores[0] === Math.max(...state.scores)) claimReward(`${session.gameId}-win:${matchId}`, 10);
+    if (session.mode !== 'practice' && state.scores[0] === Math.max(...state.scores)) {
+      claimReward(`${session.gameId}-win:${matchId}`, 10);
+    }
   }, [claimReward, matchId, recordGamePlayed, session.gameId, state.result, state.scores]);
 
   const restart = () => { setState(createRound(session.playerCount)); setMatchId(crypto.randomUUID()); };
@@ -102,7 +104,7 @@ export function ClassicGameRoomPage({ session }: { session: GameSession }) {
       <p className="game-message">{state.result ?? state.message}</p>
     </section>
     <section className="durak-actions">{state.result
-      ? <><MatchStreakStatus /><strong className="match-token-reward">{state.result}{state.scores[0] === Math.max(...state.scores) ? ' · +10 жетонов' : ''}</strong><button className="action-primary" onClick={restart}>Новая партия</button></>
+      ? <><MatchStreakStatus /><strong className="match-token-reward">{state.result}{session.mode !== 'practice' && state.scores[0] === Math.max(...state.scores) ? ' · +10 жетонов' : ''}</strong><button className="action-primary" onClick={restart}>Новая партия</button></>
       : <small>{resolving ? 'Карты на столе…' : 'Нажмите любую карту, чтобы сделать ход'}</small>}</section>
     <section className="durak-player"><div className="player-caption active">
       <div><strong>{profile.nickname}</strong><small>{state.scores[0]} очк.</small></div></div>

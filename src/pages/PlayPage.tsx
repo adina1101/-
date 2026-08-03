@@ -23,9 +23,10 @@ export function PlayPage() {
           </Link>
         ))}
       </section>
-      <aside className="practice-banner">
+      <Link href="/play/practice" className="practice-banner">
         <span>♧</span><div><strong>Практический режим</strong><p>Всегда доступен · без потери токенов</p></div>
-      </aside>
+        <Icon name="chevron" />
+      </Link>
     </div>
   );
 }
