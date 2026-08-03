@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cardix-offline-v1';
+const CACHE_NAME = 'cardix-offline-v2';
 const STATIC_ASSETS = [
   '/', '/manifest.webmanifest', '/assets/cardix-brand.png',
   '/assets/shop/dice-diamonds-card.jpg',
@@ -36,9 +36,26 @@ self.addEventListener('fetch', (event) => {
   const request = event.request;
   const url = new URL(request.url);
   if (request.method !== 'GET' || url.origin !== self.location.origin) return;
+  if (request.mode === 'navigate') {
+    event.respondWith((async () => {
+      const cache = await caches.open(CACHE_NAME);
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 2000);
+      try {
+        const response = await fetch(request, { signal: controller.signal });
+        if (response.ok) void cache.put('/', response.clone());
+        return response;
+      } catch {
+        return (await cache.match('/')) ?? Response.error();
+      } finally {
+        clearTimeout(timeout);
+      }
+    })());
+    return;
+  }
   event.respondWith((async () => {
     const cache = await caches.open(CACHE_NAME);
-    const key = request.mode === 'navigate' ? '/' : request;
+    const key = request;
     const cached = await cache.match(key);
     const refresh = fetch(request).then((response) => {
       if (response.ok) void cache.put(key, response.clone());
