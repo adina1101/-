@@ -16,12 +16,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const applySession = (nextSession: Session | null) => {
+      setSession(nextSession);
+      if (nextSession?.user.user_metadata.account_type !== 'player') {
+        window.setTimeout(() => void supabase.auth.updateUser({ data: { account_type: 'player' } }), 0);
+      }
+    };
     void supabase.auth.getSession()
-      .then(({ data }) => setSession(data.session))
-      .catch(() => setSession(null))
+      .then(({ data }) => applySession(data.session))
+      .catch(() => applySession(null))
       .finally(() => setLoading(false));
     const { data } = supabase.auth.onAuthStateChange((_event, nextSession) => {
-      setSession(nextSession);
+      applySession(nextSession);
       setLoading(false);
     });
     return () => data.subscription.unsubscribe();

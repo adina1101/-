@@ -14,7 +14,7 @@ export function AuthPage() {
     const result = mode === 'signup'
       ? await supabase.auth.signUp({
         email, password,
-        options: { data: { nickname }, emailRedirectTo: window.location.origin },
+        options: { data: { nickname, account_type: 'player' }, emailRedirectTo: window.location.origin },
       })
       : await supabase.auth.signInWithPassword({ email, password });
     setBusy(false);

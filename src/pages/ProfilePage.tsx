@@ -8,7 +8,7 @@ import { useApp } from '../lib/app-context';
 import { useEconomy } from '../lib/economy-context';
 
 export function ProfilePage() {
-  const { t, profile } = useApp();
+  const { t, profile, language } = useApp();
   const { tokens } = useEconomy();
   const [editing, setEditing] = useState(false);
   return (
@@ -16,7 +16,7 @@ export function ProfilePage() {
       <PageHeader title={t('profile')} />
       <section className="profile-card">
         <div className="profile-photo-stage"><ProfilePhoto photo={profile.photo} /><span className="level-badge">12</span></div>
-        <h2>{profile.nickname}</h2><p>@{profile.nickname.toLowerCase().replace(/\s/g, '_')}</p>
+        <h2>{profile.nickname}</h2><p>@{profile.nickname.toLowerCase().replace(/\s/g, '_')} · {language === 'ru' ? 'Игрок' : 'Player'}</p>
         <button className="edit-profile-button" onClick={() => setEditing(true)}>Изменить профиль</button>
         <div className="level-row"><span>{t('level')} 12</span><strong>2 340 / 3 000 XP</strong></div>
         <div className="progress large"><i style={{ width: '78%' }} /></div>
