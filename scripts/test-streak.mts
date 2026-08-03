@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { completeStreakDay, initialStreak, type StreakState } from '../src/lib/streak.ts';
+import { completeStreakDay, getStreakStatus, initialStreak, normalizeStreak, type StreakState } from '../src/lib/streak.ts';
 
 const first = completeStreakDay(initialStreak, '2026-08-01');
 assert.equal(first.streak.current, 1);
@@ -25,6 +25,14 @@ assert.equal(protectedResult.streak.freezes, 0);
 const expired = completeStreakDay({ ...protectedState, freezes: 10 }, '2026-08-06');
 assert.equal(expired.streak.current, 1);
 assert.equal(expired.streak.freezes, 10);
+
+const frozenStatus = getStreakStatus(protectedState, '2026-08-04');
+assert.equal(frozenStatus.frozen, true);
+assert.equal(frozenStatus.freezesNeeded, 2);
+
+const resetOnOpen = normalizeStreak({ ...protectedState, freezes: 10 }, '2026-08-06');
+assert.equal(resetOnOpen.current, 0);
+assert.equal(resetOnOpen.lastPlayedDate, '');
 
 const milestone = completeStreakDay({ ...initialStreak, current: 19, lastPlayedDate: '2026-08-02' }, '2026-08-03');
 assert.equal(milestone.streak.current, 20);

@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useMemo, useState, type ReactNode
 import type { ShopSlot } from './shop-data';
 import { useAuth } from './auth-context';
 import { loadCloudEconomy, saveCloudEconomy } from './economy-storage';
-import { completeStreakDay, initialStreak, localDateKey, type StreakState } from './streak';
+import { completeStreakDay, initialStreak, localDateKey, normalizeStreak, type StreakState } from './streak';
 import { useOnlineStatus } from './online-status';
 
 export interface SpinRecord { id: number; symbols: string[]; bet: number; win: number }
@@ -40,7 +40,8 @@ function loadState(): EconomyState {
   try {
     const stored = localStorage.getItem('cardix-economy');
     const saved = stored ? JSON.parse(stored) as Partial<EconomyState> : {};
-    return { ...initial, ...saved, streak: { ...initialStreak, ...saved.streak } };
+    const streak = normalizeStreak({ ...initialStreak, ...saved.streak });
+    return { ...initial, ...saved, streak };
   } catch { return initial; }
 }
 
@@ -71,7 +72,7 @@ export function EconomyProvider({ children }: { children: ReactNode }) {
     void loadCloudEconomy(user.id).then((saved) => {
       if (!active) return;
       if (saved) setState((current) => ({
-        ...current, ...saved, streak: { ...initialStreak, ...saved.streak },
+        ...current, ...saved, streak: normalizeStreak({ ...initialStreak, ...saved.streak }),
       }));
       else void saveCloudEconomy(user.id, state);
       setCloudReady(true);

@@ -25,6 +25,28 @@ function daysBetween(from: string, to: string) {
   return Math.round((parse(to) - parse(from)) / 86_400_000);
 }
 
+export interface StreakStatus {
+  frozen: boolean;
+  expired: boolean;
+  missedDays: number;
+  freezesNeeded: number;
+}
+
+export function getStreakStatus(current: StreakState, today = localDateKey()): StreakStatus {
+  if (!current.lastPlayedDate || current.current === 0) {
+    return { frozen: false, expired: false, missedDays: 0, freezesNeeded: 0 };
+  }
+  const gap = Math.max(0, daysBetween(current.lastPlayedDate, today));
+  const missedDays = Math.max(0, gap - 1);
+  const expired = missedDays > 3 || missedDays > current.freezes;
+  return { frozen: missedDays > 0 && !expired, expired, missedDays, freezesNeeded: Math.min(3, missedDays) };
+}
+
+export function normalizeStreak(current: StreakState, today = localDateKey()) {
+  if (!getStreakStatus(current, today).expired) return current;
+  return { ...current, current: 0, lastPlayedDate: '', title: 'Новичок', lastReward: 0 };
+}
+
 export function streakTitle(days: number) {
   if (days >= 100) return 'Легенда CARDIX';
   if (days >= 80) return 'Самый главный';
@@ -35,6 +57,7 @@ export function streakTitle(days: number) {
 }
 
 export function completeStreakDay(current: StreakState, today = localDateKey()) {
+  current = normalizeStreak(current, today);
   if (current.lastPlayedDate === today) return { streak: current, reward: 0, freezesUsed: 0 };
   const gap = current.lastPlayedDate ? daysBetween(current.lastPlayedDate, today) : 1;
   const missedDays = Math.max(0, gap - 1);

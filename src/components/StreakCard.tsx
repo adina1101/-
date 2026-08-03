@@ -18,9 +18,11 @@ export function StreakCard({ compact = false }: { compact?: boolean }) {
       <div className="streak-progress"><i style={{ width: `${progress}%` }} /></div>
     </div>
     <div className="freeze-box"><span>❄️ {streak.freezes}</span>
-      <button disabled={tokens < 25} onClick={buyFreeze}>+1 · 25 ◆</button></div>
+      <button disabled={tokens < 25} onClick={buyFreeze}>+1 · 25 ◆</button>
+      <Link href="/streak">{ru ? 'Подробнее ›' : 'Details ›'}</Link></div>
     {!compact && streak.lastReward > 0 && <small className="streak-last-reward">
       {ru ? `Последняя награда: +${streak.lastReward} жетонов` : `Last reward: +${streak.lastReward} tokens`}
     </small>}
   </section>;
 }
+import { Link } from 'wouter';

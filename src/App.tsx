@@ -16,6 +16,7 @@ import { ProfilePage } from './pages/ProfilePage';
 import { RulesPage } from './pages/RulesPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { ShopPage } from './pages/ShopPage';
+import { StreakPage } from './pages/StreakPage';
 
 export default function App() {
   return (
@@ -37,6 +38,7 @@ export default function App() {
           <Route path="/settings" component={SettingsPage} />
           <Route path="/shop" component={ShopPage} />
           <Route path="/casino" component={CasinoPage} />
+          <Route path="/streak" component={StreakPage} />
           <Route component={NotFoundPage} />
         </Switch>
          </AppShell>
