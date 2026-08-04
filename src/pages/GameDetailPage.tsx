@@ -18,7 +18,7 @@ export function GameDetailPage({ id }: { id: string }) {
   const favorite = favorites.includes(game.id);
   const isDurak = game.id === 'durak' || game.id === 'transfer-durak';
   const rules = gameRules[game.id];
-  const deck = isDurak || game.id === 'war' ? (language === 'ru' ? '36 карт' : '36 cards') : rules?.deck[language];
+  const deck = isDurak || game.id === 'war' ? (language === 'ru' ? '36 / 52 карты' : '36 / 52 cards') : rules?.deck[language];
   return (
     <div className="screen detail-screen">
       <PageHeader title={name} subtitle={`${game.players} ${t('players')}`} back="/rules" />

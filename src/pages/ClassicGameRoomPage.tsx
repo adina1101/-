@@ -24,8 +24,8 @@ function deal(deck: PlayingCard[], count: number, amount: number) {
   return { deck: next, hands };
 }
 
-function createRound(count: number): RoundState {
-  const dealt = deal(createDeck(), count, 5);
+function createRound(count: number, deckSize: 36 | 52): RoundState {
+  const dealt = deal(createDeck(Math.random, deckSize), count, 5);
   return { ...dealt, scores: Array(count).fill(0), table: [], message: 'Выберите карту', result: null };
 }
 
@@ -37,7 +37,7 @@ export function ClassicGameRoomPage({ session }: { session: GameSession }) {
   const title = language === 'ru' ? selected.nameRu : selected.nameEn;
   const names = useMemo(() => [profile.nickname, ...botNames.slice(0, session.playerCount - 1)],
     [profile.nickname, session.playerCount]);
-  const [state, setState] = useState(() => createRound(session.playerCount));
+  const [state, setState] = useState(() => createRound(session.playerCount, session.deckSize));
   const [resolving, setResolving] = useState(false);
   const [matchId, setMatchId] = useState(() => crypto.randomUUID());
 
@@ -88,10 +88,10 @@ export function ClassicGameRoomPage({ session }: { session: GameSession }) {
     }
   }, [claimReward, matchId, recordGamePlayed, session.gameId, state.result, state.scores]);
 
-  const restart = () => { setState(createRound(session.playerCount)); setMatchId(crypto.randomUUID()); };
+  const restart = () => { setState(createRound(session.playerCount, session.deckSize)); setMatchId(crypto.randomUUID()); };
   return <div className="durak-room">
     <header className="game-toolbar"><button onClick={() => navigate('/play')}>×</button>
-      <div><strong>{title} · {session.playerCount} игроков</strong><small>Отдельная партия</small></div><button>?</button>
+      <div><strong>{title} · {session.playerCount} игроков</strong><small>{session.deckSize} карт</small></div><button>?</button>
     </header>
     <section className="opponents-row">{names.slice(1).map((name, index) => <article className="table-player" key={name}>
       <strong>{name}</strong>

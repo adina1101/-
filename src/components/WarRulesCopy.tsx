@@ -6,8 +6,8 @@ export function WarRulesCopy() {
   return <>
     <h2>{t('goal')}</h2><p>{ru ? 'Заберите себе всю колоду.' : 'Collect the entire deck.'}</p>
     <h2>{t('preparation')}</h2><p>{ru
-      ? 'Все 36 карт раздаются участникам поровну. Игроки держат свои стопки закрытыми и не смотрят карты.'
-      : 'Deal all 36 cards among the players. Everyone keeps their pile face down without looking.'}</p>
+      ? 'Выбранная колода из 36 или 52 карт раздаётся участникам поровну. Игроки держат свои стопки закрытыми и не смотрят карты.'
+      : 'Deal the selected 36- or 52-card deck among the players. Everyone keeps their pile face down without looking.'}</p>
     <h2>{t('rules')}</h2><ol>
       <li>{ru ? 'Каждый участник открывает одну верхнюю карту.' : 'Each player reveals one top card.'}</li>
       <li>{ru ? 'Старшая карта забирает все открытые карты под низ стопки победителя.' : 'The highest card takes every revealed card to the bottom of the winner’s pile.'}</li>

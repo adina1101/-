@@ -51,3 +51,9 @@ dispute = playWarRound(dispute);
 assert.equal(dispute.winnerId, 0, 'the higher open card must win the dispute');
 assert.equal(dispute.players[0].deck.length, 6, 'winner must collect open and face-down cards');
 console.log('✓ dispute: one face-down and one face-up card per tied player');
+
+const fullWar = createWarGame(['One', 'Two', 'Three', 'Four'], seededRandom(12), 52);
+assert.equal(ownedIds(fullWar).length, 52, '52-card War must deal the full selected deck');
+assert.deepEqual(fullWar.players.map((player) => player.deck.length), [13, 13, 13, 13]);
+assert.ok(ownedIds(fullWar).some((id) => id.endsWith('2')), '52-card deck must contain low cards');
+console.log('✓ 52-card deck: all cards are dealt into hidden piles');

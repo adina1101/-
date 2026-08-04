@@ -58,6 +58,12 @@ const finishedBout = applyDurakAction(afterFirstPass, { type: 'pass' });
 assert.equal(finishedBout.table.length, 0, 'Done button must clear the table');
 console.log('✓ transfer choice: both Beat and Transfer actions work');
 
+const fullDeckGame = createMultiplayerDurak(['One', 'Two'], seededRandom(18), 'throw-in', 52);
+assert.equal(cardIds(fullDeckGame).length, 52, '52-card Durak must keep every selected card');
+assert.equal(new Set(cardIds(fullDeckGame)).size, 52, '52-card Durak cannot duplicate cards');
+assert.ok(cardIds(fullDeckGame).some((id) => id.endsWith('2')), '52-card Durak must include ranks 2–5');
+console.log('✓ 52-card Durak deck contains 52 unique cards');
+
 function cardIds(game: ReturnType<typeof createMultiplayerDurak>) {
   return [
     ...game.deck,

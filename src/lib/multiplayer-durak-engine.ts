@@ -63,9 +63,9 @@ function firstThrower(game: MultiplayerDurak) {
 }
 
 export function createMultiplayerDurak(names: string[], random: () => number = Math.random,
-  rules: DurakRules = 'throw-in'): MultiplayerDurak {
+  rules: DurakRules = 'throw-in', deckSize: 36 | 52 = 36): MultiplayerDurak {
   if (names.length < 2 || names.length > 6) throw new Error('Durak supports 2–6 players');
-  const deck = createDeck(random);
+  const deck = createDeck(random, deckSize);
   const trumpCard = deck[0];
   const players = names.map((name, id) => ({
     id, name, hand: Array.from({ length: 6 }, () => deck.pop()!),

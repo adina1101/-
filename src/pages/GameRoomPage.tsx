@@ -22,17 +22,18 @@ export function GameRoomPage() {
   const session = useMemo(() => {
     try {
       const saved = sessionStorage.getItem('cardverse-session');
-      return saved ? JSON.parse(saved) as { playerCount?: number; gameId?: string; mode?: string } : {};
+      return saved ? JSON.parse(saved) as { playerCount?: number; gameId?: string; mode?: string; deckSize?: number } : {};
     } catch { return {}; }
   }, []);
   const playerCount = Math.min(6, Math.max(2, session.playerCount ?? 2));
   const selectedGame = games.find((item) => item.id === session.gameId) ?? games[0];
   const practice = session.mode === 'practice';
+  const deckSize = session.deckSize === 52 ? 52 : 36;
   const gameTitle = selectedGame.nameRu;
   const rules = selectedGame.id === 'transfer-durak' ? 'transfer' : 'throw-in';
   const names = useMemo(() => [profile.nickname, ...botNames.slice(0, playerCount - 1)],
     [playerCount, profile.nickname]);
-  const [game, setGame] = useState(() => createMultiplayerDurak(names, Math.random, rules));
+  const [game, setGame] = useState(() => createMultiplayerDurak(names, Math.random, rules, deckSize));
   const [paused, setPaused] = useState(false);
   const [invalidMove, setInvalidMove] = useState<DurakCardError | null>(null);
   const [matchId, setMatchId] = useState(() => crypto.randomUUID());
@@ -98,7 +99,7 @@ export function GameRoomPage() {
     commitAction({ type: 'play', cardId });
   };
   const restart = () => {
-    setGame(createMultiplayerDurak(names, Math.random, rules)); setMatchId(crypto.randomUUID());
+    setGame(createMultiplayerDurak(names, Math.random, rules, deckSize)); setMatchId(crypto.randomUUID());
     setRewardShown(false); setPaused(false); setTransferChoice(null);
   };
   const exit = () => { if (window.confirm('Выйти из текущей партии?')) navigate('/play'); };
@@ -108,7 +109,7 @@ export function GameRoomPage() {
     <div className="durak-room">
       <header className="game-toolbar">
         <button onClick={exit}>×</button>
-        <div><strong>{gameTitle} · {playerCount} игроков</strong><small>Козырь: {game.trump}</small></div>
+        <div><strong>{gameTitle} · {playerCount} игроков</strong><small>{deckSize} карт · козырь: {game.trump}</small></div>
         <button onClick={() => setPaused(true)}>Ⅱ</button>
       </header>
 

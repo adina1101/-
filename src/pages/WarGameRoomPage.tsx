@@ -17,7 +17,7 @@ export function WarGameRoomPage({ session, local }: { session: GameSession; loca
   const count = Math.min(4, Math.max(2, session.playerCount));
   const names = useMemo(() => Array.from({ length: count }, (_, index) => index === 0
     ? profile.nickname : local ? `Игрок ${index + 1}` : botNames[index - 1]), [count, local, profile.nickname]);
-  const [game, setGame] = useState(() => createWarGame(names));
+  const [game, setGame] = useState(() => createWarGame(names, Math.random, session.deckSize));
   const [matchId, setMatchId] = useState(() => crypto.randomUUID());
   const [rewardShown, setRewardShown] = useState(false);
   const ru = language === 'ru';
@@ -31,12 +31,12 @@ export function WarGameRoomPage({ session, local }: { session: GameSession; loca
   }, [claimReward, game.result, game.winnerId, matchId, recordGamePlayed, session.mode]);
 
   const restart = () => {
-    setGame(createWarGame(names)); setMatchId(crypto.randomUUID()); setRewardShown(false);
+    setGame(createWarGame(names, Math.random, session.deckSize)); setMatchId(crypto.randomUUID()); setRewardShown(false);
   };
 
   return <div className="war-room">
     <header className="game-toolbar"><button onClick={() => navigate('/play')}>×</button>
-      <div><strong>{ru ? 'Пьяница' : 'War'} · {count}</strong><small>{ru ? `Раунд ${game.round}` : `Round ${game.round}`}</small></div>
+      <div><strong>{ru ? 'Пьяница' : 'War'} · {count}</strong><small>{session.deckSize} · {ru ? `раунд ${game.round}` : `round ${game.round}`}</small></div>
       <button onClick={restart}>↻</button></header>
     <section className="war-players">{game.players.map((player) => <article key={player.id}>
       <div className="war-pile">{player.deck.length > 0 && <DeckCover />}<b>{player.deck.length}</b></div>

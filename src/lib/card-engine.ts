@@ -13,9 +13,14 @@ const ranks = [
   ['J', 11], ['Q', 12], ['K', 13], ['A', 14],
 ] as const;
 
-export function createDeck(random: () => number = Math.random) {
+const fullRanks = [
+  ['2', 2], ['3', 3], ['4', 4], ['5', 5], ...ranks,
+] as const;
+
+export function createDeck(random: () => number = Math.random, deckSize: 36 | 52 = 36) {
+  const selectedRanks = deckSize === 52 ? fullRanks : ranks;
   const deck = suits.flatMap((suit) =>
-    ranks.map(([rank, value]) => ({ id: `${suit}${rank}`, suit, rank, value })));
+    selectedRanks.map(([rank, value]) => ({ id: `${suit}${rank}`, suit, rank, value })));
   for (let index = deck.length - 1; index > 0; index -= 1) {
     const swap = Math.floor(random() * (index + 1));
     [deck[index], deck[swap]] = [deck[swap], deck[index]];

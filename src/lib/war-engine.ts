@@ -13,10 +13,10 @@ export interface WarGame {
   result?: string;
 }
 
-export function createWarGame(names: string[], random: () => number = Math.random): WarGame {
+export function createWarGame(names: string[], random: () => number = Math.random, deckSize: 36 | 52 = 36): WarGame {
   if (names.length < 2) throw new Error('War requires at least two players');
   const players = names.map((name, id) => ({ id, name, deck: [] as PlayingCard[] }));
-  createDeck(random).forEach((card, index) => players[index % players.length].deck.push(card));
+  createDeck(random, deckSize).forEach((card, index) => players[index % players.length].deck.push(card));
   return { players, pot: [], table: [], contenders: [], round: 0, message: 'Откройте верхние карты' };
 }
 

@@ -10,8 +10,8 @@ export function DurakRulesCopy({ transfer }: { transfer: boolean }) {
       : 'Get rid of all cards after the deck runs out. The last player holding cards is the Durak.'}</p>
     <h2>{t('preparation')}</h2>
     <p>{ru
-      ? 'Играют колодой из 36 карт. Каждый получает по 6 карт. Открытая нижняя карта задаёт козырь и забирается последней. Первым атакует владелец младшего козыря.'
-      : 'Use a 36-card deck. Each player gets 6 cards. The exposed bottom card sets trump and is drawn last. The lowest trump attacks first.'}</p>
+      ? 'Можно выбрать колоду из 36 или 52 карт. Каждый получает по 6 карт. Открытая нижняя карта задаёт козырь и забирается последней. Первым атакует владелец младшего козыря.'
+      : 'Choose a 36- or 52-card deck. Each player gets 6 cards. The exposed bottom card sets trump and is drawn last. The lowest trump attacks first.'}</p>
     <h2>{t('rules')}</h2>
     <ol>
       <li>{ru ? 'Атакуют картой или картами одного достоинства.' : 'Attack with one or more cards of the same rank.'}</li>

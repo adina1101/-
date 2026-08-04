@@ -18,10 +18,10 @@ export function LocalGameRoomPage() {
   const { profile } = useApp();
   const { claimReward, recordGamePlayed } = useEconomy();
   const [, navigate] = useLocation();
+  const session = useMemo(loadGameSession, []);
   const selectedGame = useMemo(() => {
-    const id = loadGameSession().gameId;
-    return games.find((game) => game.id === id) ?? games[0];
-  }, []);
+    return games.find((game) => game.id === session.gameId) ?? games[0];
+  }, [session.gameId]);
   const rules = selectedGame.id === 'transfer-durak' ? 'transfer' : 'throw-in';
   const names = useMemo(() => {
     try {
@@ -30,7 +30,7 @@ export function LocalGameRoomPage() {
       return Array.from({ length: count }, (_, index) => index === 0 ? profile.nickname : `Игрок ${index + 1}`);
     } catch { return [profile.nickname, 'Игрок 2']; }
   }, [profile.nickname]);
-  const [game, setGame] = useState(() => createMultiplayerDurak(names, Math.random, rules));
+  const [game, setGame] = useState(() => createMultiplayerDurak(names, Math.random, rules, session.deckSize));
   const [hidden, setHidden] = useState(true);
   const [invalidMove, setInvalidMove] = useState<DurakCardError | null>(null);
   const [matchId, setMatchId] = useState(() => crypto.randomUUID());
@@ -90,7 +90,7 @@ export function LocalGameRoomPage() {
 
   return (
     <div className="local-room">
-      <header className="game-toolbar"><button onClick={exit}>×</button><div><strong>{selectedGame.nameRu} · локальная игра</strong><small>Козырь: {game.trump}</small></div><button>?</button></header>
+      <header className="game-toolbar"><button onClick={exit}>×</button><div><strong>{selectedGame.nameRu} · локальная игра</strong><small>{session.deckSize} карт · козырь: {game.trump}</small></div><button>?</button></header>
       <section className="local-players">
         {game.players.map((player) => <article className={player.id === game.actor ? 'active' : ''} key={player.id}>
           <strong>{player.name}</strong><small>{player.hand.length} карт</small>
@@ -116,7 +116,7 @@ export function LocalGameRoomPage() {
         </>}
         {game.result && <><MatchStreakStatus />{rewardShown && <strong className="match-token-reward">Победа · +10 жетонов</strong>}
           <button className="action-primary" onClick={() => {
-            setGame(createMultiplayerDurak(names, Math.random, rules)); setMatchId(crypto.randomUUID());
+            setGame(createMultiplayerDurak(names, Math.random, rules, session.deckSize)); setMatchId(crypto.randomUUID());
             setRewardShown(false); setHidden(true);
           }}>Новая партия</button></>}
       </section>

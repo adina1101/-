@@ -15,6 +15,7 @@ const copy = {
     tournament: ['Турниры', 'Выбери соревнование'],
     practice: ['Практический режим', 'Тренируйся без потери жетонов'],
     game: 'Игра', players: 'Количество участников', difficulty: 'Сложность',
+    deck: 'Количество карт в колоде', cards: 'карт',
     mode: 'Режим', start: 'Начать игру', searching: 'Ищем игроков…',
     ready: 'Всё готово!', cancel: 'Отменить', code: 'Код комнаты',
     continue: 'Продолжить', people: 'участника',
@@ -26,6 +27,7 @@ const copy = {
     tournament: ['Tournaments', 'Choose a competition'],
     practice: ['Practice mode', 'Train without losing tokens'],
     game: 'Game', players: 'Number of players', difficulty: 'Difficulty',
+    deck: 'Cards in deck', cards: 'cards',
     mode: 'Mode', start: 'Start game', searching: 'Finding players…',
     ready: 'All set!', cancel: 'Cancel', code: 'Room code',
     continue: 'Continue', people: 'players',
@@ -60,6 +62,7 @@ export function PlayModePage({ mode }: { mode: string }) {
     const selected = sessionStorage.getItem('cardverse-selected-game');
     return games.some((game) => game.id === selected) ? selected! : 'durak';
   });
+  const [deckSize, setDeckSize] = useState<36 | 52>(36);
   const [roomCode, setRoomCode] = useState('');
   const [status, setStatus] = useState<'setup' | 'searching' | 'ready'>('setup');
   const selectedGame = games.find((game) => game.id === gameId) ?? games[0];
@@ -70,7 +73,7 @@ export function PlayModePage({ mode }: { mode: string }) {
 
   const start = () => {
     sessionStorage.setItem('cardverse-session', JSON.stringify({
-      gameId, mode: validMode, choice, playerCount, invitedFriend,
+      gameId, mode: validMode, choice, playerCount, deckSize, invitedFriend,
     }));
     if (invitedFriend) sessionStorage.removeItem('cardix-invited-friend');
     setStatus(validMode === 'online' ? 'searching' : 'ready');
@@ -118,6 +121,14 @@ export function PlayModePage({ mode }: { mode: string }) {
       }}>
         {games.map((game) => <option key={game.id} value={game.id}>{language === 'ru' ? game.nameRu : game.nameEn}</option>)}
       </select>
+
+      <h2 className="setup-label">{text.deck}</h2>
+      <div className="player-count-picker deck-size-picker">
+        {([36, 52] as const).map((size) => <button type="button" key={size}
+          className={deckSize === size ? 'active' : ''} onClick={() => setDeckSize(size)}>
+          <strong>{size}</strong><small>{text.cards}</small>
+        </button>)}
+      </div>
 
       {hasPlayerChoice && !singlePlayer && <><h2 className="setup-label">{text.players}</h2>
         <div className="player-count-picker">
