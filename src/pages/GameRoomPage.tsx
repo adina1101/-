@@ -9,7 +9,7 @@ import { useApp } from '../lib/app-context';
 import { useEconomy } from '../lib/economy-context';
 import type { PlayingCard, TablePair } from '../lib/card-engine';
 import {
-  applyDurakAction, chooseDurakAction, createMultiplayerDurak, getDefenderCardOptions, getDurakCardError,
+  applyDurakAction, chooseDurakAction, createMultiplayerDurak, getDefenderCardOptions, getDurakActionAvailability, getDurakCardError,
   type DurakCardError,
 } from '../lib/multiplayer-durak-engine';
 import { games } from '../lib/games';
@@ -40,11 +40,8 @@ export function GameRoomPage() {
   const [departing, setDeparting] = useState<{ table: TablePair[]; motion: string } | null>(null);
   const [transferChoice, setTransferChoice] = useState<PlayingCard | null>(null);
   const human = game.players[0];
-  const openAttack = game.table.find((pair) => !pair.defense)?.attack;
-  const allDefended = game.table.length > 0 && game.table.every((pair) => pair.defense);
   const humanTurn = game.actor === 0;
-  const canTake = humanTurn && game.phase === 'defend' && Boolean(openAttack);
-  const canPass = humanTurn && (game.phase === 'taking' || (game.phase === 'throw' && allDefended));
+  const actions = getDurakActionAvailability(game, 0);
 
   useEffect(() => {
     if (paused || departing || game.result || game.actor === 0) return;
@@ -142,10 +139,15 @@ export function GameRoomPage() {
       <section className="durak-actions">
         {game.result ? <><MatchStreakStatus />{rewardShown && <strong className="match-token-reward">Победа · +10 жетонов</strong>}
           <button className="action-primary" onClick={restart}>Новая партия</button></> : <>
-          <button type="button" disabled={!canTake || Boolean(departing)} className="action-secondary" onClick={() => commitAction({ type: 'take' })}>Взять</button>
-          <button type="button" disabled={!canPass || Boolean(departing)} className="action-secondary" onClick={() => commitAction({ type: 'pass' })}>Пас</button>
-          <button type="button" disabled={!canPass || Boolean(departing)} className="action-primary" onClick={() => commitAction({ type: 'pass' })}>Бито</button>
-          <small>{humanTurn ? game.phase === 'defend' ? 'Отбей карту или возьми' : 'Подкинь подходящую карту или нажми «Пас»' : `Сейчас ходит ${game.players[game.actor].name}`}</small>
+          <button type="button" disabled={!actions.canTake || Boolean(departing)} className="action-secondary" onClick={() => commitAction({ type: 'take' })}>Взять</button>
+          <button type="button" disabled={!actions.canPass || Boolean(departing)} className="action-secondary" onClick={() => commitAction({ type: 'pass' })}>Пас</button>
+          <button type="button" disabled={!actions.canFinishBout || Boolean(departing)} className="action-primary" onClick={() => commitAction({ type: 'pass' })}>Бито</button>
+          <small>{humanTurn
+            ? actions.canTake ? 'Отбей карту, переведи её или нажми «Взять»'
+              : actions.canFinishBout ? 'Все карты отбиты — нажми «Бито»'
+                : actions.canPass ? 'Подкинь подходящую карту или нажми «Пас»'
+                  : 'Сделай ход подходящей картой'
+            : `Сейчас ходит ${game.players[game.actor].name}`}</small>
         </>}
       </section>
 

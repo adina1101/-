@@ -33,6 +33,22 @@ export interface MultiplayerDurak {
 export const activePlayerIds = (game: MultiplayerDurak) =>
   game.players.filter((player) => player.hand.length > 0).map((player) => player.id);
 
+export function getDurakActionAvailability(game: MultiplayerDurak, playerId: number) {
+  const playerTurn = game.actor === playerId && !game.result;
+  const hasOpenAttack = game.table.some((pair) => !pair.defense);
+  const allDefended = game.table.length > 0 && game.table.every((pair) => pair.defense);
+  const activeAttackers = activePlayerIds(game).filter((id) => id !== game.defender);
+  const remainingThrowers = activeAttackers.filter((id) => !game.passed.includes(id));
+  const canCloseDefense = playerTurn && game.phase === 'throw' && allDefended
+    && remainingThrowers.length === 1 && remainingThrowers[0] === playerId;
+  return {
+    canTake: playerTurn && game.phase === 'defend' && hasOpenAttack,
+    canPass: playerTurn && (game.phase === 'taking'
+      || (game.phase === 'throw' && allDefended && !canCloseDefense)),
+    canFinishBout: canCloseDefense,
+  };
+}
+
 function nextPlayer(players: DurakPlayer[], from: number, excluded: number[] = []) {
   for (let offset = 1; offset <= players.length; offset += 1) {
     const id = (from + offset) % players.length;

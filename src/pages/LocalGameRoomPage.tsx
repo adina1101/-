@@ -9,7 +9,7 @@ import { useApp } from '../lib/app-context';
 import { useEconomy } from '../lib/economy-context';
 import type { PlayingCard, TablePair } from '../lib/card-engine';
 import {
-  applyDurakAction, createMultiplayerDurak, getDefenderCardOptions, getDurakCardError, type DurakCardError,
+  applyDurakAction, createMultiplayerDurak, getDefenderCardOptions, getDurakActionAvailability, getDurakCardError, type DurakCardError,
 } from '../lib/multiplayer-durak-engine';
 import { games } from '../lib/games';
 import { loadGameSession } from '../lib/game-session';
@@ -38,9 +38,7 @@ export function LocalGameRoomPage() {
   const [departing, setDeparting] = useState<{ table: TablePair[]; motion: string } | null>(null);
   const [transferChoice, setTransferChoice] = useState<PlayingCard | null>(null);
   const actor = game.players[game.actor];
-  const allDefended = game.table.length > 0 && game.table.every((pair) => pair.defense);
-  const canTake = game.phase === 'defend' && game.table.some((pair) => !pair.defense);
-  const canEndBout = game.phase === 'taking' || (game.phase === 'throw' && allDefended);
+  const actions = getDurakActionAvailability(game, game.actor);
 
   const act = (action: Parameters<typeof applyDurakAction>[1]) => {
     const next = applyDurakAction(game, action);
@@ -111,10 +109,10 @@ export function LocalGameRoomPage() {
       </section>
       <section className="durak-actions">
         {!game.result && <>
-          <button type="button" disabled={!canTake || hidden} className="action-secondary" onClick={() => act({ type: 'take' })}>Взять</button>
-          <button type="button" disabled={!canEndBout || hidden} className="action-secondary" onClick={() => act({ type: 'pass' })}>Пас</button>
-          <button type="button" disabled={!canEndBout || hidden} className="action-primary" onClick={() => act({ type: 'pass' })}>Бито</button>
-          <small>{hidden ? 'Сначала нажми «Я готов»' : canTake ? 'Можно взять карты' : canEndBout ? 'Подкинь ещё или заверши заход' : 'Выбери подходящую карту'}</small>
+          <button type="button" disabled={!actions.canTake || hidden} className="action-secondary" onClick={() => act({ type: 'take' })}>Взять</button>
+          <button type="button" disabled={!actions.canPass || hidden} className="action-secondary" onClick={() => act({ type: 'pass' })}>Пас</button>
+          <button type="button" disabled={!actions.canFinishBout || hidden} className="action-primary" onClick={() => act({ type: 'pass' })}>Бито</button>
+          <small>{hidden ? 'Сначала нажми «Я готов»' : actions.canTake ? 'Можно взять карты' : actions.canFinishBout ? 'Все карты отбиты — нажми «Бито»' : actions.canPass ? 'Подкинь карту или нажми «Пас»' : 'Выбери подходящую карту'}</small>
         </>}
         {game.result && <><MatchStreakStatus />{rewardShown && <strong className="match-token-reward">Победа · +10 жетонов</strong>}
           <button className="action-primary" onClick={() => {

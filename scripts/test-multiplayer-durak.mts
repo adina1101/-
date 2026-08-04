@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {
-  applyDurakAction, chooseDurakAction, createMultiplayerDurak, getDefenderCardOptions, getDurakCardError,
+  applyDurakAction, chooseDurakAction, createMultiplayerDurak, getDefenderCardOptions, getDurakActionAvailability, getDurakCardError,
 } from '../src/lib/multiplayer-durak-engine.ts';
 
 interface Scenario { label: string; count: number; humanIds: number[]; seed: number; rules?: 'throw-in' | 'transfer' }
@@ -46,6 +46,16 @@ assert.equal(transferred.table.length, 2, 'Transfer must add the selected card t
 assert.equal(transferred.attacker, 1, 'The previous defender becomes the attacker');
 assert.equal(transferred.defender, 2, 'Transfer must target the next active player');
 assert.equal(transferred.actor, 2, 'The new defender must act immediately');
+assert.equal(getDurakActionAvailability(choiceGame, 1).canTake, true, 'Transfer defender must be able to take');
+const taking = applyDurakAction(choiceGame, { type: 'take' });
+assert.equal(taking.phase, 'taking', 'Take button must start the taking phase');
+assert.equal(getDurakActionAvailability(taking, taking.actor).canPass, true, 'Thrower must be able to pass after take');
+assert.equal(getDurakActionAvailability(defended, defended.actor).canPass, true, 'First thrower must be able to pass');
+const afterFirstPass = applyDurakAction(defended, { type: 'pass' });
+assert.equal(getDurakActionAvailability(afterFirstPass, afterFirstPass.actor).canFinishBout, true,
+  'Last thrower must be able to press Done');
+const finishedBout = applyDurakAction(afterFirstPass, { type: 'pass' });
+assert.equal(finishedBout.table.length, 0, 'Done button must clear the table');
 console.log('✓ transfer choice: both Beat and Transfer actions work');
 
 function cardIds(game: ReturnType<typeof createMultiplayerDurak>) {
