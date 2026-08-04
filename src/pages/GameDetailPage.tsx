@@ -2,6 +2,7 @@ import { useLocation } from 'wouter';
 import { Icon } from '../components/Icon';
 import { PageHeader } from '../components/PageHeader';
 import { DurakRulesCopy } from '../components/DurakRulesCopy';
+import { WarRulesCopy } from '../components/WarRulesCopy';
 import { useApp } from '../lib/app-context';
 import { games } from '../lib/games';
 
@@ -28,7 +29,7 @@ export function GameDetailPage({ id }: { id: string }) {
         <article><span>◆</span><small>Сложность</small><strong>{'●'.repeat(game.difficulty)}{'○'.repeat(3 - game.difficulty)}</strong></article>
       </section>
       <section className="rules-copy">
-        {isDurak ? <DurakRulesCopy transfer={game.id === 'transfer-durak'} /> : <>
+        {isDurak ? <DurakRulesCopy transfer={game.id === 'transfer-durak'} /> : game.id === 'war' ? <WarRulesCopy /> : <>
           <h2>{t('goal')}</h2><p>Выполните цель партии раньше соперников.</p>
           <h2>{t('preparation')}</h2><p>Подготовьте колоду и раздайте карты согласно правилам выбранной игры.</p>
           <h2>{t('rules')}</h2><p>Полный игровой движок для этой игры находится в разработке.</p>

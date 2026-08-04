@@ -40,6 +40,11 @@ const modeOptions: Record<Mode, string[]> = {
   practice: ['Легко', 'Средне', 'Сложно', 'Эксперт'],
 };
 
+function getMaxPlayers(range: string) {
+  const values = range.match(/\d+/g)?.map(Number) ?? [6];
+  return Math.min(6, Math.max(...values));
+}
+
 export function PlayModePage({ mode }: { mode: string }) {
   const { language } = useApp();
   const [, navigate] = useLocation();
@@ -59,6 +64,7 @@ export function PlayModePage({ mode }: { mode: string }) {
   const [status, setStatus] = useState<'setup' | 'searching' | 'ready'>('setup');
   const selectedGame = games.find((game) => game.id === gameId) ?? games[0];
   const singlePlayer = selectedGame.players === '1';
+  const playerCounts = [2, 3, 4, 5, 6].filter((count) => count <= getMaxPlayers(selectedGame.players));
   const isJoinByCode = validMode === 'online' && choice === 'Войти по коду';
   const hasPlayerChoice = validMode !== 'tournament';
 
@@ -107,7 +113,7 @@ export function PlayModePage({ mode }: { mode: string }) {
         const nextGame = games.find((game) => game.id === event.target.value);
         setGameId(event.target.value);
         if (nextGame?.players === '1') setPlayerCount(1);
-        else if (playerCount === 1) setPlayerCount(2);
+        else if (nextGame) setPlayerCount((current) => Math.min(Math.max(2, current), getMaxPlayers(nextGame.players)));
         sessionStorage.setItem('cardverse-selected-game', event.target.value);
       }}>
         {games.map((game) => <option key={game.id} value={game.id}>{language === 'ru' ? game.nameRu : game.nameEn}</option>)}
@@ -115,7 +121,7 @@ export function PlayModePage({ mode }: { mode: string }) {
 
       {hasPlayerChoice && !singlePlayer && <><h2 className="setup-label">{text.players}</h2>
         <div className="player-count-picker">
-          {[2, 3, 4, 5, 6].map((count) => <button key={count} className={playerCount === count ? 'active' : ''}
+          {playerCounts.map((count) => <button key={count} className={playerCount === count ? 'active' : ''}
             onClick={() => setPlayerCount(count)}><strong>{count}</strong><small>{language === 'ru' ? 'игр.' : 'pl.'}</small></button>)}
         </div></>}
 
