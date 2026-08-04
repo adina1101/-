@@ -13,6 +13,7 @@
     "test:multiplayer": "node --experimental-strip-types scripts/test-multiplayer-durak.mts",
     "test:streak": "node --experimental-strip-types scripts/test-streak.mts",
     "test:war": "node --experimental-strip-types scripts/test-war.mts",
+    "test:rules": "node --experimental-strip-types scripts/test-game-rules.mts",
     "db:login": "supabase login",
     "db:link": "supabase link",
     "db:new": "supabase migration new",
