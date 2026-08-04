@@ -45,6 +45,7 @@ export function CasinoPage() {
       </section>
       <section className="casino-rules">
         <h2>Правила выигрыша</h2>
+        <div><span className="rule-symbols bonus">A 6 ♠</span><p><strong>Туз + шестёрка — ×4</strong><small>Третий символ: любая масть, ещё один туз или шестёрка; цвет не важен</small></p></div>
         <div><span className="rule-symbols mixed">♥ K J</span><p><strong>Один цвет — ×2</strong><small>Все три символа красные или чёрные</small></p></div>
         <div><span className="rule-symbols exact">♦ ♦ ♦</span><p><strong>Одинаковые — ×3</strong><small>Совпали символ, масть и цвет</small></p></div>
         <div><span className="rule-symbols lose">A ♥ ♣</span><p><strong>Проигрыш — ставка ×2</strong><small>Любая другая комбинация</small></p></div>
