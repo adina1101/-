@@ -8,7 +8,7 @@ import { useApp } from '../lib/app-context';
 import { useEconomy } from '../lib/economy-context';
 import { games } from '../lib/games';
 import type { GameSession } from '../lib/game-session';
-import { tournamentStageName, type TournamentGameProps } from '../lib/tournament-engine';
+import { tournamentStageName, tournamentTokenReward, type TournamentGameProps } from '../lib/tournament-engine';
 
 interface RoundState {
   deck: PlayingCard[]; hands: PlayingCard[][]; scores: number[];
@@ -88,9 +88,10 @@ export function ClassicGameRoomPage({ session, tournament, onTournamentComplete,
     onTournamentComplete?.(state.scores[0] === Math.max(...state.scores));
     recordGamePlayed(`${session.gameId}:${matchId}`);
     if (session.mode !== 'practice' && state.scores[0] === Math.max(...state.scores)) {
-      claimReward(`${session.gameId}-win:${matchId}`, 10);
+      claimReward(`${session.gameId}-win:${matchId}`,
+        tournament ? tournamentTokenReward(tournament.stage, true) : 10);
     }
-  }, [claimReward, matchId, onTournamentComplete, recordGamePlayed, session.gameId, state.result, state.scores]);
+  }, [claimReward, matchId, onTournamentComplete, recordGamePlayed, session.gameId, state.result, state.scores, tournament]);
 
   const restart = () => { setState(createRound(session.playerCount, session.deckSize)); setMatchId(crypto.randomUUID()); };
   return <div className="durak-room">

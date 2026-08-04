@@ -8,7 +8,7 @@ import { useApp } from '../lib/app-context';
 import { useEconomy } from '../lib/economy-context';
 import type { GameSession } from '../lib/game-session';
 import { createWarGame, playWarRound } from '../lib/war-engine';
-import { tournamentStageName, type TournamentGameProps } from '../lib/tournament-engine';
+import { tournamentStageName, tournamentTokenReward, type TournamentGameProps } from '../lib/tournament-engine';
 
 const botNames = ['CardBot', 'Nova', 'Rex'];
 
@@ -31,9 +31,9 @@ export function WarGameRoomPage({ session, local, tournament, onTournamentComple
     onTournamentComplete?.(game.winnerId === 0);
     recordGamePlayed(`war:${matchId}`);
     if (session.mode !== 'practice' && game.winnerId === 0) {
-      claimReward(`war-win:${matchId}`, 10); setRewardShown(true);
+      claimReward(`war-win:${matchId}`, tournament ? tournamentTokenReward(tournament.stage, true) : 10); setRewardShown(true);
     }
-  }, [claimReward, game.result, game.winnerId, matchId, onTournamentComplete, recordGamePlayed, session.mode]);
+  }, [claimReward, game.result, game.winnerId, matchId, onTournamentComplete, recordGamePlayed, session.mode, tournament]);
 
   const restart = () => {
     setGame(createWarGame(names, Math.random, session.deckSize)); setMatchId(crypto.randomUUID()); setRewardShown(false);

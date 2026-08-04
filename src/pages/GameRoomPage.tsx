@@ -14,7 +14,7 @@ import {
   type DurakCardError,
 } from '../lib/multiplayer-durak-engine';
 import { games } from '../lib/games';
-import { tournamentStageName, type TournamentGameProps } from '../lib/tournament-engine';
+import { tournamentStageName, tournamentTokenReward, type TournamentGameProps } from '../lib/tournament-engine';
 
 const botNames = ['CardBot', 'Nova', 'Rex', 'Luna', 'Max'];
 export function GameRoomPage({ tournament, onTournamentComplete, onTournamentNext }: TournamentGameProps) {
@@ -60,10 +60,11 @@ export function GameRoomPage({ tournament, onTournamentComplete, onTournamentNex
     onTournamentComplete?.(game.loserId !== 0);
     recordGamePlayed(`${selectedGame.id}:${matchId}`);
     if (!practice && game.loserId !== undefined && game.loserId !== 0) {
-      claimReward(`${selectedGame.id}-win:${matchId}`, 10);
+      claimReward(`${selectedGame.id}-win:${matchId}`,
+        tournament ? tournamentTokenReward(tournament.stage, true) : 10);
       setRewardShown(true);
     }
-  }, [claimReward, game.loserId, game.result, matchId, onTournamentComplete, practice, recordGamePlayed, selectedGame.id]);
+  }, [claimReward, game.loserId, game.result, matchId, onTournamentComplete, practice, recordGamePlayed, selectedGame.id, tournament]);
 
   const commitAction = (action: Parameters<typeof applyDurakAction>[1]) => {
     const next = applyDurakAction(game, action);
