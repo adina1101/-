@@ -15,6 +15,7 @@
     "test:war": "node --experimental-strip-types scripts/test-war.mts",
     "test:rules": "node --experimental-strip-types scripts/test-game-rules.mts",
     "test:casino": "node --experimental-strip-types scripts/test-slot-engine.mts",
+    "test:tournament": "node --experimental-strip-types scripts/test-tournament.mts",
     "db:login": "supabase login",
     "db:link": "supabase link",
     "db:new": "supabase migration new",

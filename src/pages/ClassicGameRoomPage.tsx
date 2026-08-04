@@ -2,11 +2,13 @@ import { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'wouter';
 import { PlayingCardView as Card } from '../components/PlayingCardView';
 import { MatchStreakStatus } from '../components/MatchStreakStatus';
+import { TournamentResultPanel } from '../components/TournamentResultPanel';
 import { createDeck, type PlayingCard } from '../lib/card-engine';
 import { useApp } from '../lib/app-context';
 import { useEconomy } from '../lib/economy-context';
 import { games } from '../lib/games';
 import type { GameSession } from '../lib/game-session';
+import { tournamentStageName, type TournamentGameProps } from '../lib/tournament-engine';
 
 interface RoundState {
   deck: PlayingCard[]; hands: PlayingCard[][]; scores: number[];
@@ -29,14 +31,15 @@ function createRound(count: number, deckSize: 36 | 52): RoundState {
   return { ...dealt, scores: Array(count).fill(0), table: [], message: 'Выберите карту', result: null };
 }
 
-export function ClassicGameRoomPage({ session }: { session: GameSession }) {
+export function ClassicGameRoomPage({ session, tournament, onTournamentComplete, onTournamentNext }:
+  { session: GameSession } & TournamentGameProps) {
   const { profile, language } = useApp();
   const { claimReward, recordGamePlayed } = useEconomy();
   const [, navigate] = useLocation();
   const selected = games.find((game) => game.id === session.gameId) ?? games[0];
   const title = language === 'ru' ? selected.nameRu : selected.nameEn;
-  const names = useMemo(() => [profile.nickname, ...botNames.slice(0, session.playerCount - 1)],
-    [profile.nickname, session.playerCount]);
+  const names = useMemo(() => [profile.nickname, tournament?.opponents[tournament.stage] ?? botNames[0],
+    ...botNames.slice(1, session.playerCount - 1)], [profile.nickname, session.playerCount, tournament]);
   const [state, setState] = useState(() => createRound(session.playerCount, session.deckSize));
   const [resolving, setResolving] = useState(false);
   const [matchId, setMatchId] = useState(() => crypto.randomUUID());
@@ -82,16 +85,18 @@ export function ClassicGameRoomPage({ session }: { session: GameSession }) {
 
   useEffect(() => {
     if (!state.result) return;
+    onTournamentComplete?.(state.scores[0] === Math.max(...state.scores));
     recordGamePlayed(`${session.gameId}:${matchId}`);
     if (session.mode !== 'practice' && state.scores[0] === Math.max(...state.scores)) {
       claimReward(`${session.gameId}-win:${matchId}`, 10);
     }
-  }, [claimReward, matchId, recordGamePlayed, session.gameId, state.result, state.scores]);
+  }, [claimReward, matchId, onTournamentComplete, recordGamePlayed, session.gameId, state.result, state.scores]);
 
   const restart = () => { setState(createRound(session.playerCount, session.deckSize)); setMatchId(crypto.randomUUID()); };
   return <div className="durak-room">
     <header className="game-toolbar"><button onClick={() => navigate('/play')}>×</button>
-      <div><strong>{title} · {session.playerCount} игроков</strong><small>{session.deckSize} карт</small></div><button>?</button>
+      <div><strong>{tournament ? `${tournament.title} · ${tournamentStageName(tournament.stage, language === 'ru')}` : `${title} · ${session.playerCount} игроков`}</strong>
+        <small>{tournament ? `${language === 'ru' ? 'Соперник' : 'Opponent'}: ${names[1]}` : `${session.deckSize} карт`}</small></div><button>?</button>
     </header>
     <section className="opponents-row">{names.slice(1).map((name, index) => <article className="table-player" key={name}>
       <strong>{name}</strong>
@@ -104,7 +109,8 @@ export function ClassicGameRoomPage({ session }: { session: GameSession }) {
       <p className="game-message">{state.result ?? state.message}</p>
     </section>
     <section className="durak-actions">{state.result
-      ? <><MatchStreakStatus /><strong className="match-token-reward">{state.result}{session.mode !== 'practice' && state.scores[0] === Math.max(...state.scores) ? ' · +10 жетонов' : ''}</strong><button className="action-primary" onClick={restart}>Новая партия</button></>
+      ? tournament && onTournamentNext ? <TournamentResultPanel tournament={tournament} onNext={onTournamentNext} />
+        : <><MatchStreakStatus /><strong className="match-token-reward">{state.result}{session.mode !== 'practice' && state.scores[0] === Math.max(...state.scores) ? ' · +10 жетонов' : ''}</strong><button className="action-primary" onClick={restart}>Новая партия</button></>
       : <small>{resolving ? 'Карты на столе…' : 'Нажмите любую карту, чтобы сделать ход'}</small>}</section>
     <section className="durak-player"><div className="player-caption active">
       <div><strong>{profile.nickname}</strong><small>{state.scores[0]} очк.</small></div></div>

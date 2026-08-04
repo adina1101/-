@@ -4,6 +4,7 @@ import { Icon } from '../components/Icon';
 import { PageHeader } from '../components/PageHeader';
 import { useApp } from '../lib/app-context';
 import { games } from '../lib/games';
+import { createTournament } from '../lib/tournament-engine';
 
 type Mode = 'ai' | 'online' | 'local' | 'tournament' | 'practice';
 
@@ -72,9 +73,11 @@ export function PlayModePage({ mode }: { mode: string }) {
   const hasPlayerChoice = validMode !== 'tournament';
 
   const start = () => {
+    const matchPlayerCount = validMode === 'tournament' ? 2 : playerCount;
     sessionStorage.setItem('cardverse-session', JSON.stringify({
-      gameId, mode: validMode, choice, playerCount, deckSize, invitedFriend,
+      gameId, mode: validMode, choice, playerCount: matchPlayerCount, deckSize, invitedFriend,
     }));
+    if (validMode === 'tournament') createTournament(choice, gameId);
     if (invitedFriend) sessionStorage.removeItem('cardix-invited-friend');
     setStatus(validMode === 'online' ? 'searching' : 'ready');
     if (validMode === 'online') window.setTimeout(() => setStatus('ready'), 1300);
@@ -88,9 +91,9 @@ export function PlayModePage({ mode }: { mode: string }) {
           {status === 'ready' ? '✓' : '♠'}
         </div>
         <h1>{status === 'ready' ? text.ready : text.searching}</h1>
-        <p>{game?.[language === 'ru' ? 'nameRu' : 'nameEn']} · {playerCount} {text.people}</p>
+        <p>{game?.[language === 'ru' ? 'nameRu' : 'nameEn']} · {validMode === 'tournament' ? `8 ${text.people}` : `${playerCount} ${text.people}`}</p>
         {status === 'ready' && <div className="players-preview">
-          {Array.from({ length: playerCount }, (_, index) => <span key={index}>{index === 0 ? 'A' : validMode === 'ai' || validMode === 'practice' ? 'AI' : index + 1}</span>)}
+          {Array.from({ length: validMode === 'tournament' ? 8 : playerCount }, (_, index) => <span key={index}>{index === 0 ? 'A' : validMode === 'ai' || validMode === 'practice' || validMode === 'tournament' ? 'AI' : index + 1}</span>)}
         </div>}
         <button className="primary-button" onClick={() => status === 'ready'
           ? navigate(validMode === 'local' ? '/local-game' : '/game') : setStatus('setup')}>

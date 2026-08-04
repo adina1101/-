@@ -5,6 +5,7 @@ import { PlayingCardView as Card } from '../components/PlayingCardView';
 import { InvalidMoveDialog } from '../components/InvalidMoveDialog';
 import { MatchStreakStatus } from '../components/MatchStreakStatus';
 import { TransferChoiceDialog } from '../components/TransferChoiceDialog';
+import { TournamentResultPanel } from '../components/TournamentResultPanel';
 import { useApp } from '../lib/app-context';
 import { useEconomy } from '../lib/economy-context';
 import type { PlayingCard, TablePair } from '../lib/card-engine';
@@ -13,10 +14,11 @@ import {
   type DurakCardError,
 } from '../lib/multiplayer-durak-engine';
 import { games } from '../lib/games';
+import { tournamentStageName, type TournamentGameProps } from '../lib/tournament-engine';
 
 const botNames = ['CardBot', 'Nova', 'Rex', 'Luna', 'Max'];
-export function GameRoomPage() {
-  const { profile } = useApp();
+export function GameRoomPage({ tournament, onTournamentComplete, onTournamentNext }: TournamentGameProps) {
+  const { profile, language } = useApp();
   const { claimReward, recordGamePlayed } = useEconomy();
   const [, navigate] = useLocation();
   const session = useMemo(() => {
@@ -31,8 +33,8 @@ export function GameRoomPage() {
   const deckSize = session.deckSize === 52 ? 52 : 36;
   const gameTitle = selectedGame.nameRu;
   const rules = selectedGame.id === 'transfer-durak' ? 'transfer' : 'throw-in';
-  const names = useMemo(() => [profile.nickname, ...botNames.slice(0, playerCount - 1)],
-    [playerCount, profile.nickname]);
+  const names = useMemo(() => [profile.nickname, tournament?.opponents[tournament.stage] ?? botNames[0],
+    ...botNames.slice(1, playerCount - 1)], [playerCount, profile.nickname, tournament]);
   const [game, setGame] = useState(() => createMultiplayerDurak(names, Math.random, rules, deckSize));
   const [paused, setPaused] = useState(false);
   const [invalidMove, setInvalidMove] = useState<DurakCardError | null>(null);
@@ -55,12 +57,13 @@ export function GameRoomPage() {
 
   useEffect(() => {
     if (!game.result) return;
+    onTournamentComplete?.(game.loserId !== 0);
     recordGamePlayed(`${selectedGame.id}:${matchId}`);
     if (!practice && game.loserId !== undefined && game.loserId !== 0) {
       claimReward(`${selectedGame.id}-win:${matchId}`, 10);
       setRewardShown(true);
     }
-  }, [claimReward, game.loserId, game.result, matchId, practice, recordGamePlayed, selectedGame.id]);
+  }, [claimReward, game.loserId, game.result, matchId, onTournamentComplete, practice, recordGamePlayed, selectedGame.id]);
 
   const commitAction = (action: Parameters<typeof applyDurakAction>[1]) => {
     const next = applyDurakAction(game, action);
@@ -109,7 +112,8 @@ export function GameRoomPage() {
     <div className="durak-room">
       <header className="game-toolbar">
         <button onClick={exit}>×</button>
-        <div><strong>{gameTitle} · {playerCount} игроков</strong><small>{deckSize} карт · козырь: {game.trump}</small></div>
+        <div><strong>{tournament ? `${tournament.title} · ${tournamentStageName(tournament.stage, language === 'ru')}` : `${gameTitle} · ${playerCount} игроков`}</strong>
+          <small>{tournament ? `${language === 'ru' ? 'Соперник' : 'Opponent'}: ${names[1]}` : `${deckSize} карт · козырь: ${game.trump}`}</small></div>
         <button onClick={() => setPaused(true)}>Ⅱ</button>
       </header>
 
@@ -138,7 +142,8 @@ export function GameRoomPage() {
       </section>
 
       <section className="durak-actions">
-        {game.result ? <><MatchStreakStatus />{rewardShown && <strong className="match-token-reward">Победа · +10 жетонов</strong>}
+        {game.result ? tournament && onTournamentNext ? <TournamentResultPanel tournament={tournament} onNext={onTournamentNext} />
+          : <><MatchStreakStatus />{rewardShown && <strong className="match-token-reward">Победа · +10 жетонов</strong>}
           <button className="action-primary" onClick={restart}>Новая партия</button></> : <>
           <button type="button" disabled={!actions.canTake || Boolean(departing)} className="action-secondary" onClick={() => commitAction({ type: 'take' })}>Взять</button>
           <button type="button" disabled={!actions.canPass || Boolean(departing)} className="action-secondary" onClick={() => commitAction({ type: 'pass' })}>Пас</button>

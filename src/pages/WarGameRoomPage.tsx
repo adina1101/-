@@ -3,20 +3,24 @@ import { useLocation } from 'wouter';
 import { DeckCover } from '../components/DeckCover';
 import { MatchStreakStatus } from '../components/MatchStreakStatus';
 import { PlayingCardView } from '../components/PlayingCardView';
+import { TournamentResultPanel } from '../components/TournamentResultPanel';
 import { useApp } from '../lib/app-context';
 import { useEconomy } from '../lib/economy-context';
 import type { GameSession } from '../lib/game-session';
 import { createWarGame, playWarRound } from '../lib/war-engine';
+import { tournamentStageName, type TournamentGameProps } from '../lib/tournament-engine';
 
 const botNames = ['CardBot', 'Nova', 'Rex'];
 
-export function WarGameRoomPage({ session, local }: { session: GameSession; local: boolean }) {
+export function WarGameRoomPage({ session, local, tournament, onTournamentComplete, onTournamentNext }:
+  { session: GameSession; local: boolean } & TournamentGameProps) {
   const { profile, language } = useApp();
   const { claimReward, recordGamePlayed } = useEconomy();
   const [, navigate] = useLocation();
   const count = Math.min(4, Math.max(2, session.playerCount));
   const names = useMemo(() => Array.from({ length: count }, (_, index) => index === 0
-    ? profile.nickname : local ? `Игрок ${index + 1}` : botNames[index - 1]), [count, local, profile.nickname]);
+    ? profile.nickname : index === 1 && tournament ? tournament.opponents[tournament.stage]
+      : local ? `Игрок ${index + 1}` : botNames[index - 1]), [count, local, profile.nickname, tournament]);
   const [game, setGame] = useState(() => createWarGame(names, Math.random, session.deckSize));
   const [matchId, setMatchId] = useState(() => crypto.randomUUID());
   const [rewardShown, setRewardShown] = useState(false);
@@ -24,11 +28,12 @@ export function WarGameRoomPage({ session, local }: { session: GameSession; loca
 
   useEffect(() => {
     if (!game.result) return;
+    onTournamentComplete?.(game.winnerId === 0);
     recordGamePlayed(`war:${matchId}`);
     if (session.mode !== 'practice' && game.winnerId === 0) {
       claimReward(`war-win:${matchId}`, 10); setRewardShown(true);
     }
-  }, [claimReward, game.result, game.winnerId, matchId, recordGamePlayed, session.mode]);
+  }, [claimReward, game.result, game.winnerId, matchId, onTournamentComplete, recordGamePlayed, session.mode]);
 
   const restart = () => {
     setGame(createWarGame(names, Math.random, session.deckSize)); setMatchId(crypto.randomUUID()); setRewardShown(false);
@@ -36,7 +41,8 @@ export function WarGameRoomPage({ session, local }: { session: GameSession; loca
 
   return <div className="war-room">
     <header className="game-toolbar"><button onClick={() => navigate('/play')}>×</button>
-      <div><strong>{ru ? 'Пьяница' : 'War'} · {count}</strong><small>{session.deckSize} · {ru ? `раунд ${game.round}` : `round ${game.round}`}</small></div>
+      <div><strong>{tournament ? `${tournament.title} · ${tournamentStageName(tournament.stage, ru)}` : `${ru ? 'Пьяница' : 'War'} · ${count}`}</strong>
+        <small>{tournament ? `${ru ? 'Соперник' : 'Opponent'}: ${names[1]}` : `${session.deckSize} · ${ru ? `раунд ${game.round}` : `round ${game.round}`}`}</small></div>
       <button onClick={restart}>↻</button></header>
     <section className="war-players">{game.players.map((player) => <article key={player.id}>
       <div className="war-pile">{player.deck.length > 0 && <DeckCover />}<b>{player.deck.length}</b></div>
@@ -49,7 +55,8 @@ export function WarGameRoomPage({ session, local }: { session: GameSession; loca
       <p>{game.result ?? game.message}</p>
       {game.contenders.length > 0 && <strong className="war-label">{ru ? `СПОР · в банке ${game.pot.length}` : `WAR · ${game.pot.length} in pot`}</strong>}
     </section>
-    <section className="war-actions">{game.result ? <><MatchStreakStatus />
+    <section className="war-actions">{game.result ? tournament && onTournamentNext
+      ? <TournamentResultPanel tournament={tournament} onNext={onTournamentNext} /> : <><MatchStreakStatus />
       {rewardShown && <strong className="match-token-reward">{ru ? 'Победа · +10 жетонов' : 'Win · +10 tokens'}</strong>}
       <button className="action-primary" onClick={restart}>{ru ? 'Новая партия' : 'New game'}</button></>
       : <button className="action-primary" onClick={() => setGame((current) => playWarRound(current))}>

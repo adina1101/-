@@ -4,6 +4,7 @@ import { useAuth } from './auth-context';
 import { loadCloudEconomy, saveCloudEconomy } from './economy-storage';
 import { completeStreakDay, initialStreak, localDateKey, normalizeStreak, type StreakState } from './streak';
 import { useOnlineStatus } from './online-status';
+import { tournamentRatingDelta } from './tournament-engine';
 
 export interface SpinRecord { id: number; symbols: string[]; bet: number; win: number }
 export interface CasinoStats { totalSpins: number; totalWon: number; biggestWin: number }
@@ -17,6 +18,8 @@ export interface EconomyState {
   rewardClaims: string[];
   completedGameClaims: string[];
   streak: StreakState;
+  rating: number;
+  tournamentClaims: string[];
 }
 interface EconomyValue extends EconomyState {
   purchase: (id: string, price: number, slot?: ShopSlot) => boolean;
@@ -26,6 +29,7 @@ interface EconomyValue extends EconomyState {
   claimReward: (claimId: string, amount: number) => void;
   recordGamePlayed: (matchId: string) => void;
   buyFreeze: () => boolean;
+  recordTournamentResult: (claimId: string, won: boolean) => void;
   hasFreeSpin: boolean;
 }
 
@@ -33,6 +37,7 @@ const initial: EconomyState = {
   tokens: 240, owned: [], stats: { totalSpins: 0, totalWon: 0, biggestWin: 0 },
   history: [], freeSpinDate: '', equipped: {}, rewardClaims: [], completedGameClaims: [],
   streak: initialStreak,
+  rating: 1000, tournamentClaims: [],
 };
 const EconomyContext = createContext<EconomyValue | null>(null);
 
@@ -133,6 +138,12 @@ export function EconomyProvider({ children }: { children: ReactNode }) {
       }));
       return true;
     },
+    recordTournamentResult: (claimId, won) => setState((current) =>
+      current.tournamentClaims.includes(claimId) ? current : ({
+        ...current,
+        rating: Math.max(0, current.rating + tournamentRatingDelta(won)),
+        tournamentClaims: [...current.tournamentClaims, claimId].slice(-100),
+      })),
     startSpin: (bet, isFree) => {
       if (!isFree && state.tokens < bet * 2) return false;
       if (isFree && state.freeSpinDate === today) return false;
