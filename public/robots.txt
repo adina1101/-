@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+Allow: /rules
+Disallow: /game
+Disallow: /local-game
+Disallow: /play
+Disallow: /profile
+Disallow: /friends
+Disallow: /settings
+Disallow: /shop
+Disallow: /casino
+
+Sitemap: https://ruddy-eight-39.vercel.app/sitemap.xml

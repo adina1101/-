@@ -4,6 +4,7 @@ import { useApp } from '../lib/app-context';
 import { Icon } from './Icon';
 import { ProfilePhoto } from './ProfilePhoto';
 import { OfflineBanner } from './OfflineBanner';
+import { SeoMetadata } from './SeoMetadata';
 
 const navItems = [
   { href: '/rules', icon: 'rules', label: 'rules' },
@@ -20,11 +21,12 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { t, profile } = useApp();
 
   if (location === '/game' || location === '/local-game') {
-    return <div className="app-frame game-frame"><OfflineBanner /><main className="app-content">{children}</main></div>;
+    return <div className="app-frame game-frame"><SeoMetadata /><OfflineBanner /><main className="app-content">{children}</main></div>;
   }
 
   return (
     <div className="app-frame">
+      <SeoMetadata />
       <OfflineBanner />
       <main className="app-content">{children}</main>
       <nav className="bottom-nav" aria-label="Main navigation">

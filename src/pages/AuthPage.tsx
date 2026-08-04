@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react';
+import { Link } from 'wouter';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
 
 export function AuthPage() {
@@ -37,6 +38,11 @@ export function AuthPage() {
         <div className="auth-logo">C<span>♠</span></div>
         <h1>CARDI<b>X</b></h1><p>Классические карточные игры.<br />Одна вселенная.</p>
         <div className="auth-suits"><span>♥</span><span>♣</span><span>♦</span><span>♠</span></div>
+        <div className="auth-seo">
+          <h2>Карточные игры онлайн и офлайн</h2>
+          <p>Дурак подкидной и переводной, Пьяница, покер, пасьянсы и турниры с рейтингом.</p>
+          <Link href="/rules">Посмотреть правила 32 игр →</Link>
+        </div>
       </section>
       <section className="auth-panel">
         <div className="auth-tabs"><button className={mode === 'signin' ? 'active' : ''} onClick={() => setMode('signin')}>Вход</button><button className={mode === 'signup' ? 'active' : ''} onClick={() => setMode('signup')}>Регистрация</button></div>
