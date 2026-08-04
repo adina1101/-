@@ -26,7 +26,7 @@ export function TournamentResultPanel({ tournament, onNext }: {
     {tournament.status === 'awaiting-next' && <button className="action-primary" onClick={onNext}>
       {ru ? 'Следующий матч' : 'Next match'}</button>}
     {tournament.status === 'champion' && <><h3>{ru ? '🏆 Ты выиграл турнир!' : '🏆 Tournament champion!'}</h3>
-      <strong className="tournament-prize">◆ +25 {ru ? 'жетонов' : 'tokens'}</strong>
+      <strong className="tournament-prize">◆ +10 {ru ? 'жетонов' : 'tokens'}</strong>
       <button className="action-primary" onClick={() => navigate('/play/tournament')}>{ru ? 'Новый турнир' : 'New tournament'}</button></>}
     {tournament.status === 'eliminated' && <><p>{ru ? 'Ты выбыл из сетки. Можно начать новый турнир.' : 'You are out of the bracket. Start a new tournament.'}</p>
       <button className="action-primary" onClick={() => navigate('/play/tournament')}>{ru ? 'Вернуться' : 'Return'}</button></>}

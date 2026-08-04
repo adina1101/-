@@ -65,4 +65,4 @@ export const tournamentStageName = (stage: number, ru: boolean) =>
 
 export const tournamentRatingDelta = (won: boolean) => won ? 25 : -18;
 
-export const tournamentTokenReward = (stage: number, won: boolean) => won ? (stage === 2 ? 25 : 10) : 0;
+export const tournamentTokenReward = (_stage: number, won: boolean) => won ? 10 : 0;
